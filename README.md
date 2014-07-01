@@ -1,5 +1,5 @@
 # moar
-[![Build Status](https://travis-ci.org/Jell/moar.svg?branch=master)](https://travis-ci.org/Jell/moar)
+[![Build Status](https://travis-ci.org/Jell/moar.svg?branch=master)](https://travis-ci.org/Jell/moar) [![Clojars Project](http://clojars.org/moar/latest-version.svg)](http://clojars.org/moar)
 
 A Clojure library designed to ... well, that part is up to you.
 
