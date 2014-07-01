@@ -95,7 +95,7 @@
 
 (defn m-sequence
   "given a collection of monadic values
-   it returns a manadic value where the value
+   it returns a monadic value where the value
    is a collection of the values in the given
    monadic values
 
