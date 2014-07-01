@@ -33,7 +33,6 @@
 (deftype FailResult [value]
   clojure.lang.IDeref
   (deref [this] value)
-
   Result
   (success? [_] false)
   MonadInstance
