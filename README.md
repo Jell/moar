@@ -1,11 +1,19 @@
 # moar
-[![Build Status](https://travis-ci.org/Jell/moar.svg?branch=master)](https://travis-ci.org/Jell/moar) [![Clojars Project](http://clojars.org/moar/latest-version.svg)](http://clojars.org/moar)
+[![Build Status](https://travis-ci.org/Jell/moar.svg?branch=master)]
 
-A Clojure library designed to ... well, that part is up to you.
+> MOOOOAR!!1!
+>
+> -- <cite>The Internet</cite>
+
+A monad library made for clojure.
 
 ## Usage
 
 FIXME
+
+## Latest version
+
+(https://travis-ci.org/Jell/moar) [![Clojars Project](http://clojars.org/moar/latest-version.svg)](http://clojars.org/moar)
 
 ## License
 
