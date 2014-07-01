@@ -1,5 +1,6 @@
 (ns moar.monads.set
-  (:require [moar.protocols :refer :all]))
+  (:require [clojure.set]
+            [moar.protocols :refer :all]))
 
 (deftype SetMonad []
   Monad
