@@ -21,7 +21,7 @@
   (testing "associativity"
     (are [m f g]
       (= (bind (bind m f) g)
-         (bind m (fn [x] (bind (f x) g)))
+         (bind m (fn [x] (bind (f x) g))))
       (just 5) #(just (inc %))  #(just (* 2 %))
       nothing  #(just (inc %))  #(just (* 2 %))
       (just 5) (fn [_] nothing) #(just (* 2 %))
