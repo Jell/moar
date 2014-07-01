@@ -1,6 +1,5 @@
 (ns moar.core
   (:require [moar.protocols :refer :all]
-            [moar.monads.maybe :as maybe]
             [moar.monads.id :refer [id]]))
 
 (defn monad-instance?
