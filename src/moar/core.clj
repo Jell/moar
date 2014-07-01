@@ -52,6 +52,19 @@
   [impl]
   (mzero* impl))
 
+(defn- mlet-body
+  [[binding expr & rest :as bindings] body]
+  {:pre [(even? (count bindings))]}
+  (cond
+   (empty? bindings) `(>> ~@body)
+   (= binding :let)  `(let ~expr ~(mlet-body rest body))
+   :else             `(>>= ~expr (fn [~binding] ~(mlet-body rest body)))))
+
+(defmacro mlet
+  "TODO: document"
+  [bindings & body]
+  (mlet-body bindings body))
+
 (defn mplus
   "Mean of combining two monads"
   ([monad-a monad-b]
