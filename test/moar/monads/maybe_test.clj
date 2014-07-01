@@ -25,6 +25,6 @@
       (just 5) #(just (inc %))  #(just (* 2 %))
       nothing  #(just (inc %))  #(just (* 2 %))
       (just 5) (fn [_] nothing) #(just (* 2 %))
-      (just 5) #(just (* 2 %)) (fn [_] nothing)
+      (just 5) #(just (* 2 %))  (fn [_] nothing)
       (just 5) (fn [_] nothing) (fn [_] nothing)
       nothing  (fn [_] nothing) (fn [_] nothing))))

@@ -26,6 +26,7 @@
 (defn bind
   "Applies a function returning a monad to a monad of the same kind"
   ([monad function]
+     {:pre [(satisfies? MonadInstance monad)]}
      (bind (->monad-implementation monad) monad function))
   ([impl monad function]
      {:post [(same-monad? monad %)]}
@@ -52,6 +53,14 @@
   [impl]
   (mzero* impl))
 
+(defn mplus
+  "Mean of combining two monads"
+  ([monad-a monad-b]
+     (mplus (->monad-implementation monad-a) monad-a monad-b))
+  ([impl monad-a monad-b]
+     {:pre [(monad-instance? impl monad-a monad-b)]}
+     (mplus* impl monad-a monad-b)))
+
 (defn- mlet-body
   [[binding expr & rest :as bindings] body]
   {:pre [(even? (count bindings))]}
@@ -61,14 +70,11 @@
    :else             `(>>= ~expr (fn [~binding] ~(mlet-body rest body)))))
 
 (defmacro mlet
-  "TODO: document"
+  "Evaluates the body in a lexical context where the symbols in
+  bindings are bound to the return value of their respective
+  monads. A :let modifier can be used to bind non-monadic values.
+
+  Example:
+  (mlet [x (just 5) y (just 2) :let [z (+ x y)]] (just z))"
   [bindings & body]
   (mlet-body bindings body))
-
-(defn mplus
-  "Mean of combining two monads"
-  ([monad-a monad-b]
-     (mplus (->monad-implementation monad-a) monad-a monad-b))
-  ([impl monad-a monad-b]
-     {:pre [(monad-instance? impl monad-a monad-b)]}
-     (mplus* impl monad-a monad-b)))
