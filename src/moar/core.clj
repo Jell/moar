@@ -1,74 +1,51 @@
-(ns moar.core)
+(ns moar.core
+  (:require [moar.protocols :refer :all]
+            [moar.monads.maybe :as maybe]))
 
-(defprotocol Monad
-  (wrap [impl value])
-  (bind* [impl monad function]))
+(defn monad-instance?
+  "Checks whether monads have the given implementation"
+  [impl & monads]
+  (every? #(and (satisfies? MonadInstance %)
+                (= impl (->monad-implementation %)))
+          monads))
 
-(defprotocol MonadImpl
-  (->monad-implementation [t]))
+(defn same-monad?
+  "Checks whether two monads have the same implementation"
+  [monad-a monad-b]
+  (and
+   (satisfies? MonadInstance monad-a)
+   (satisfies? MonadInstance monad-b)
+   (= (->monad-implementation monad-a)
+      (->monad-implementation monad-b))))
 
 (defn bind
+  "Applies a function returning a monad to a monad of the same kind"
   ([monad function]
-     (bind* (->monad-implementation monad) monad function))
+     (bind (->monad-implementation monad) monad function))
   ([impl monad function]
+     {:post [(same-monad? monad %)]}
      (bind* impl monad function)))
 
-(defprotocol MonadPlus
-  (mzero [impl])
-  (mplus [impl monad-a monad-b]))
+(defn >>=
+  "Applies bind sequentially to n functions"
+  [monad & functions]
+  (reduce bind monad functions))
 
-(defprotocol MonadLift
-  (lift [impl function]))
-
-(defprotocol MonadTransformerImpl
-  (->monad-transformer [impl]))
-
-(declare just nothing)
-(defprotocol Maybe
-  (just? [this]))
-
-(deftype MaybeImpl []
-  Monad
-  (wrap [_ value] (just value))
-  (bind* [_ monad fun]
-    (if (just? monad)
-      (fun @monad)
-      nothing)))
-
-(def maybe-impl (MaybeImpl.))
-
-(deftype Just [value]
-  clojure.lang.IDeref
-  (deref [this] value)
-  Maybe
-  (just? [_] true)
-  MonadImpl
-  (->monad-implementation [_] maybe-impl))
-
-(deftype Nothing []
-  ;; clojure.lang.IDeref
-  ;; (deref [this] (throw (Exception. "Can't deref nothing")))
-  Maybe
-  (just? [_] false)
-  MonadImpl
-  (->monad-implementation [_] maybe-impl))
-
-(defn just [value] (Just. value))
-(def nothing (Nothing.))
-
-(defn- mdo* [[head & tail :as body]]
+(defn- >>-body [[head & tail :as body]]
   {:pre [(>= (count body) 1)]}
   (if (empty? tail)
     head
-    `(bind ~head (fn [_#] ~(mdo* tail)))))
+    `(bind ~head (fn [_#] ~(>>-body tail)))))
 
-(defmacro mdo [& body]
-  (mdo* body))
+(defmacro >>
+  "Chain actions returning discarding intermediate results"
+  [& actions]
+  (>>-body actions))
 
-(mdo (just 5)
-     nothing
-     (throw (Exception.)))
-
-(just? nothing)
-
-(bind (just 5) (fn [x] (just (* 2 x))))
+(defn mplus
+  "Mean of combining two monads"
+  ([monad-a monad-b]
+     (mplus (->monad-implementation monad-a) monad-a monad-b))
+  ([impl monad-a monad-b]
+     {:pre [(monad-instance? impl monad-a monad-b)]}
+     (mplus* impl monad-a monad-b)))
