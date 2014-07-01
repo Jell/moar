@@ -5,9 +5,9 @@
 
 (defprotocol State
   (run-state [this init-state]
-    "given a initial state returns a pair
-     where the first value is the modified state
-     and the second value is the value produced by running the operation"))
+    "given a initial state returns a pair where the first value is the
+     modified state and the second value is the value produced by
+     running the operation"))
 
 (deftype StateMonad []
   Monad
@@ -15,7 +15,7 @@
   (bind* [_ monad fun]
     (make-state
      (fn [state]
-       (let [[state value] (run-state monad state)]
+       (let [[value state] (run-state monad state)]
          (run-state (fun value) state))))))
 
 (def monad
@@ -34,18 +34,16 @@
   (StateFunction. fun))
 
 (defn state-v
-  "returns a state function that leaves the state unchanged
-   and uses the given value as its value"
+  "returns a state function that leaves the state unchanged and uses the
+  given value as its value"
   [value]
-  (make-state
-   (fn [state]
-     [state value])))
+  (make-state (fn [state] [value state])))
 
 (defn mod-state
-  "takes a function of the state
-   and returns a state function of the value nil"
+  "takes a function of the state and returns a state function of the
+  value nil"
   [fun & args]
-  (make-state (fn [state] [(apply fun state args) nil])))
+  (make-state (fn [state] [nil (apply fun state args)])))
 
 (def get-state
   "reads the state into the value"
@@ -54,4 +52,4 @@
 (defn set-state
   "change the state to the given value"
   [new-state]
-  (make-state (fn [state] [new-state nil])))
+  (make-state (fn [state] [nil new-state])))
