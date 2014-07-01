@@ -11,7 +11,7 @@
 
 (deftype StateMonad []
   Monad
-  (wrap [_ value] (state-v value))
+  (wrap* [_ value] (state-v value))
   (bind* [_ monad fun]
     (make-state
      (fn [state]
