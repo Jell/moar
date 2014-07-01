@@ -1,5 +1,5 @@
 # moar
-[![Build Status](https://travis-ci.org/Jell/moar.svg?branch=master)]
+![Build Status](https://travis-ci.org/Jell/moar.svg?branch=master)
 
 > MOOOOAR!!1!
 >
