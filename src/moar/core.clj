@@ -1,6 +1,7 @@
 (ns moar.core
   (:require [moar.protocols :refer :all]
-            [moar.monads.maybe :as maybe]))
+            [moar.monads.maybe :as maybe]
+            [moar.monads.id :refer [id]]))
 
 (defn monad-instance?
   "Checks whether monads have the given implementation"
@@ -78,3 +79,77 @@
   (mlet [x (just 5) y (just 2) :let [z (+ x y)]] (just z))"
   [bindings & body]
   (mlet-body bindings body))
+
+(defn fmap
+  "takes a function and a monad and
+   returns a new monad with that function applied
+   to the value
+
+   Example:
+   (= (just 2) (fmap inc (just 1)))"
+  [fun monad]
+  {:pre [(satisfies? MonadInstance monad)]}
+  (mlet
+   [value monad]
+   (wrap (->monad-implementation monad) (fun value))))
+
+(defn m-sequence
+  "given a collection of monadic values
+   it returns a manadic value where the value
+   is a collection of the values in the given
+   monadic values
+
+   Example:
+   (= (m-sequence [(id 1) (id 2)]) (id [1 2]))"
+  [collection]
+  (if (empty? collection)
+    collection
+    (let [impl (->monad-implementation (first collection))]
+      (reduce
+       (fn [m item]
+         (mlet
+          [col m
+           v   item]
+          (wrap impl (conj col v))))
+       (wrap impl [])
+       collection))))
+
+(defn map-m
+  "given a collection and a function
+   from items in that collection to a monadic value
+   map-m returns a monad containing a list of those values
+
+   Example:
+   (= (id [2 3]) (map-m (comp id inc) [1 2]))"
+  [fun collection]
+  (m-sequence (map fun collection)))
+
+(defn join
+  "given a nested monad value
+   join lifts the value up and gives you a flat monadic value
+
+   Example:
+   (= (join (id (id 1))) (id 1))"
+  [monad]
+  (>>= monad identity))
+
+(defn extract-m
+  "given a map where the values are monad values
+   it returns a monad where the value is a map
+   and the values are the values of the input
+   monads
+
+   Example:
+   (= (id {:a 1 :b 2}) (extract-m {:a (id 1) :b (id 2)}))"
+  [map]
+  (if (empty? map)
+    map
+    (let [impl (->monad-implementation (first (vals map)))]
+      (reduce
+       (fn [m [key item]]
+         (mlet
+          [res-map m
+           value   item]
+          (wrap impl (assoc res-map key value))))
+       (wrap impl {})
+       map))))

@@ -11,3 +11,22 @@
                 :let [v (+ a b)]
                 c (id 4)]
                (id (+ v c)))))))
+
+(deftest fmap-tests
+  (testing "fmapping over id monads"
+    (is (= 3 @(m/fmap inc (id 2))))))
+
+(deftest m-sequence-tests
+  (testing "calling sequence across id monads"
+    (is (= (m/m-sequence [(id 1) (id 2)]) (id [1 2])))))
+
+(deftest map-m-tests
+  (testing "map-m over id monads"
+    (is (= (id [2 3]) (m/map-m (comp id inc) [1 2])))))
+
+(deftest join-test
+  (is (= (m/join (id (id 1))) (id 1))))
+
+(deftest extract-m-test
+  (is (= (id {:a 1 :b 2})
+         (m/extract-m {:a (id 1) :b (id 2)}))))
