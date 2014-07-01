@@ -7,13 +7,13 @@
 
 (deftype MaybeMonad []
   Monad
-  (wrap [_ value] (just value))
+  (wrap* [_ value] (just value))
   (bind* [_ monad fun]
     (if (just? monad)
       (fun @monad)
       nothing))
   MonadPlus
-  (mzero [_] nothing)
+  (mzero* [_] nothing)
   (mplus* [_ monad-a monad-b]
     (case [(just? monad-a) (just? monad-b)]
       [false false] nothing
@@ -29,7 +29,11 @@
   Maybe
   (just? [_] true)
   MonadInstance
-  (->monad-implementation [_] monad))
+  (->monad-implementation [_] monad)
+  Object
+  (equals [_ other]
+    (and (instance? Just other)
+         (= value @other))))
 
 (defn just [value] (Just. value))
 
@@ -39,6 +43,8 @@
   Maybe
   (just? [_] false)
   MonadInstance
-  (->monad-implementation [_] monad))
+  (->monad-implementation [_] monad)
+  Object
+  (equals [_ other] (instance? Nothing)))
 
 (def nothing (Nothing.))

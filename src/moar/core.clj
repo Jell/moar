@@ -18,6 +18,11 @@
    (= (->monad-implementation monad-a)
       (->monad-implementation monad-b))))
 
+(defn wrap
+  "Wraps a value in a monad"
+  [impl value]
+  (wrap* impl value))
+
 (defn bind
   "Applies a function returning a monad to a monad of the same kind"
   ([monad function]
@@ -41,6 +46,11 @@
   "Chain actions returning discarding intermediate results"
   [& actions]
   (>>-body actions))
+
+(defn mzero
+  "Invariant point of a monad"
+  [impl]
+  (mzero* impl))
 
 (defn mplus
   "Mean of combining two monads"

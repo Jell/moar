@@ -6,17 +6,12 @@
     "Returns the implementation of the underlying monad"))
 
 (defprotocol Monad
-  (wrap [impl value]
-    "Wraps a value in a monad")
-  (bind* [impl monad function]
-    "Applies a function returning a monad
-    to a monad of the same kind"))
+  (wrap* [impl value])
+  (bind* [impl monad function]))
 
 (defprotocol MonadPlus
-  (mzero [impl]
-    "Invariant point of a monad")
-  (mplus* [impl monad-a monad-b]
-    "Mean of combining two monads"))
+  (mzero* [impl])
+  (mplus* [impl monad-a monad-b]))
 
 (defprotocol MonadLift
   (lift* [impl arity function]))
