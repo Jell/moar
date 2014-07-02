@@ -1,7 +1,8 @@
 (ns moar.monads.maybe-t
   (:require [moar.protocols :refer :all]
             [moar.core :refer :all]
-            [moar.monads.maybe :as maybe]))
+            [moar.monads.maybe :as maybe])
+  (:import [moar.monads.maybe MaybeMonad]))
 
 (declare run-maybe-t)
 

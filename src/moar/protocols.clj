@@ -14,7 +14,8 @@
   (mplus* [impl monad-a monad-b]))
 
 (defprotocol MonadLift
-  (lift* [impl arity function]))
+  (lift* [impl monadic-value])
+  (wrapper-implementation [impl]))
 
 (defprotocol MonadTransformerImpl
-  (->monad-transformer [impl]))
+  (->monad-transformer [impl wrapper-impl]))

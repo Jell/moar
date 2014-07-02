@@ -26,10 +26,8 @@
 (defn bind
   "Applies a function returning a monad to a monad of the same kind"
   ([monad function]
-     {:pre [(satisfies? MonadInstance monad)]}
      (bind (->monad-implementation monad) monad function))
   ([impl monad function]
-     {:post [(same-monad? monad %)]}
      (bind* impl monad function)))
 
 (defn >>=
@@ -58,7 +56,6 @@
   ([monad-a monad-b]
      (mplus (->monad-implementation monad-a) monad-a monad-b))
   ([impl monad-a monad-b]
-     {:pre [(monad-instance? impl monad-a monad-b)]}
      (mplus* impl monad-a monad-b)))
 
 (defn- mlet-body
@@ -87,7 +84,6 @@
    Example:
    (= (just 2) (fmap inc (just 1)))"
   [fun monad]
-  {:pre [(satisfies? MonadInstance monad)]}
   (mlet
    [value monad]
    (wrap (->monad-implementation monad) (fun value))))
