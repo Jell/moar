@@ -17,8 +17,7 @@
                (fn [x] (wrap monad (inc x)))
                (fn [x] (wrap monad (inc x))))
          (list (just 3))))
-  (is (= @(bind (run-maybe-t sequence/monad
-                             (list (just 3)
+  (is (= @(bind (run-maybe-t (list (just 3)
                                    (just 4)
                                    nothing
                                    (just 5)))

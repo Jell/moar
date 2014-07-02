@@ -8,17 +8,15 @@
 (deftype MaybeT [wrapped-impl]
   Monad
   (wrap* [_ value]
-    (run-maybe-t wrapped-impl (wrap wrapped-impl (maybe/just value))))
+    (run-maybe-t (wrap wrapped-impl (maybe/just value))))
   (bind* [self monad fun]
     (run-maybe-t
-     wrapped-impl
      (bind @monad
            (fn [maybe-value]
              (if (maybe/just? maybe-value)
                (let [new-monad (fun @maybe-value)]
-                 (if (monad-instance? self new-monad)
-                   @new-monad
-                   new-monad))
+                 (if (satisfies? RunMaybeT new-monad)
+                   @new-monad new-monad))
                (wrap wrapped-impl maybe/nothing))))))
   Object
   (equals [_ other]
@@ -29,16 +27,16 @@
 (defn maybe-t [impl]
   (MaybeT. impl))
 
-(deftype RunMaybeT [impl value]
+(deftype RunMaybeT [value]
   clojure.lang.IDeref
   (deref [this] value)
   MonadInstance
-  (->monad-implementation [_] (maybe-t impl))
+  (->monad-implementation [_]
+    (maybe-t (->monad-implementation value)))
   Object
   (equals [_ other]
     (and (instance? RunMaybeT other)
-         (same-monad? impl (.impl other))
          (= value @other))))
 
-(defn run-maybe-t [impl value]
-  (RunMaybeT. impl value))
+(defn run-maybe-t [value]
+  (RunMaybeT. value))
