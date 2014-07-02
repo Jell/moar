@@ -23,4 +23,6 @@
                                    nothing
                                    (just 5)))
                 (fn [x] (wrap monad (inc x))))
-         (list (just 4) (just 5) nothing (just 6)))))
+         (list (just 4) (just 5) nothing (just 6))))
+  (is (= @(fmap inc (wrap monad 1))
+         (list (just 2)))))
