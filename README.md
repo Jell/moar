@@ -45,6 +45,7 @@ Quick example:
 
 - No magic
 - Easily extensible
+- Intelligent error messages
 - Support all major monads
 - Support for major monad transformers
 - Adapt implementation to the dynamic nature of Clojure
@@ -69,6 +70,13 @@ Quick example:
 ## Latest version
 
 [![Clojars Project](http://clojars.org/moar/latest-version.svg)](http://clojars.org/moar)
+
+## Future work
+
+- Cleanup monad transformers (a bit rough right now)
+- Better pretty printing
+- `lift` (not yet drafted)
+- More monad and monad transformers implementations
 
 ## License
 
