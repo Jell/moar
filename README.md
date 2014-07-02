@@ -49,6 +49,23 @@ Quick example:
 - Support for major monad transformers
 - Adapt implementation to the dynamic nature of Clojure
 
+## Notes
+
+- a monadic value like `(just 4)` implements the `MonadInstance`
+  protocol, which points to a monad implementation (`maybe/monad` in
+  that case) that implements the `Monad` (and potentially the
+  `MonadPlus`) protocol.
+
+- `return` in haskell becomes `wrap monad` in `moar`. Since we can't
+  dispatch on the return type at compile time in Clojure, we do an
+  explicit dispatch on the monad implementation at runtime.
+
+  We chose `wrap` instead of `return` to avoid confusion to newcomers.
+
+- `bind`, `>>=`, `fmap` and `>>` behave like their haskell
+  counterpart, except that they dispatch the monad implementation at
+  runtime based on their monadic argument.
+
 ## Latest version
 
 [![Clojars Project](http://clojars.org/moar/latest-version.svg)](http://clojars.org/moar)
