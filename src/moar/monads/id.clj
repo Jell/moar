@@ -5,9 +5,9 @@
 
 (deftype IDMonad []
   Monad
-  (wrap* [_ value] (id value))
-  (bind* [_ monad fun]
-    (fun @monad)))
+  (wrap* [_ val] (id val))
+  (bind* [_ m-val m-fun]
+    (m-fun @m-val)))
 
 (def monad (IDMonad.))
 

@@ -4,13 +4,13 @@
 
 (deftype SetMonad []
   Monad
-  (wrap* [_ value] #{value})
-  (bind* [_ monad fun]
-    (apply clojure.set/union (map fun monad)))
+  (wrap* [_ val] #{val})
+  (bind* [_ m-val m-fun]
+    (apply clojure.set/union (map m-fun m-val)))
   MonadPlus
   (mzero* [_] #{})
-  (mplus* [_ monad-a monad-b]
-    (clojure.set/union monad-a monad-b)))
+  (mplus* [_ m-val-a m-val-b]
+    (clojure.set/union m-val-a m-val-b)))
 
 (def monad (SetMonad.))
 

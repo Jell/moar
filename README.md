@@ -50,6 +50,14 @@ Quick example:
 - Support for major monad transformers
 - Adapt implementation to the dynamic nature of Clojure
 
+## Naming conventions
+
+- `val`: values (a)
+- `fun`: functions (a -> b)
+- `m-val`: monadic values (MonadInstance m => m a)
+- `m-fun`: monadic functions (a -> m a)
+- `m-impl`: implementation of a monad (Monad, MonadPlus)
+
 ## Notes
 
 - a monadic value like `(just 4)` implements the `MonadInstance`

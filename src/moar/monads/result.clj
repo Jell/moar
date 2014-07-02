@@ -8,11 +8,11 @@
 
 (deftype ResultMonad []
   Monad
-  (wrap* [_ value] (result value))
-  (bind* [_ monad fun]
-    (if (success? monad)
-      (fun @monad)
-      monad)))
+  (wrap* [_ val] (result val))
+  (bind* [_ m-val m-fun]
+    (if (success? m-val)
+      (m-fun @m-val)
+      m-val)))
 
 (def monad (ResultMonad.))
 

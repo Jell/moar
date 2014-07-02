@@ -4,38 +4,38 @@
 
 (defn monad-instance?
   "Checks whether monads have the given implementation"
-  [impl & monads]
+  [m-impl & m-vals]
   (every? #(and (satisfies? MonadInstance %)
-                (= impl (->monad-implementation %)))
-          monads))
+                (= m-impl (->monad-implementation %)))
+          m-vals))
 
 (defn same-monad?
   "Checks whether two monads have the same implementation"
-  [monad-a monad-b]
+  [m-val-a m-val-b]
   (and
-   (satisfies? MonadInstance monad-a)
-   (satisfies? MonadInstance monad-b)
-   (= (->monad-implementation monad-a)
-      (->monad-implementation monad-b))))
+   (satisfies? MonadInstance m-val-a)
+   (satisfies? MonadInstance m-val-b)
+   (= (->monad-implementation m-val-a)
+      (->monad-implementation m-val-b))))
 
 (defn wrap
   "Wraps a value in a monad"
-  [impl value]
-  (wrap* impl value))
+  [m-impl val]
+  (wrap* m-impl val))
 
 (defn bind
   "Applies a function returning a monad to a monad of the same kind"
-  ([monad function]
-     {:pre [(satisfies? MonadInstance monad)]}
-     (bind (->monad-implementation monad) monad function))
-  ([impl monad function]
-     {:post [(same-monad? monad %)]}
-     (bind* impl monad function)))
+  ([m-val m-fun]
+     {:pre [(satisfies? MonadInstance m-val)]}
+     (bind (->monad-implementation m-val) m-val m-fun))
+  ([m-impl m-val m-fun]
+     {:post [(same-monad? m-val %)]}
+     (bind* m-impl m-val m-fun)))
 
 (defn >>=
   "Applies bind sequentially to n functions"
-  [monad & functions]
-  (reduce bind monad functions))
+  [m-val & m-funs]
+  (reduce bind m-val m-funs))
 
 (defn- >>-body [[head & tail :as body]]
   {:pre [(>= (count body) 1)]}
@@ -50,16 +50,16 @@
 
 (defn mzero
   "Invariant point of a monad"
-  [impl]
-  (mzero* impl))
+  [m-impl]
+  (mzero* m-impl))
 
 (defn mplus
   "Mean of combining two monads"
-  ([monad-a monad-b]
-     (mplus (->monad-implementation monad-a) monad-a monad-b))
-  ([impl monad-a monad-b]
-     {:pre [(monad-instance? impl monad-a monad-b)]}
-     (mplus* impl monad-a monad-b)))
+  ([m-val-a m-val-b]
+     (mplus (->monad-implementation m-val-a) m-val-a m-val-b))
+  ([impl m-val-a m-val-b]
+     {:pre [(monad-instance? impl m-val-a m-val-b)]}
+     (mplus* impl m-val-a m-val-b)))
 
 (defn- mlet-body
   [[binding expr & rest :as bindings] body]
@@ -86,11 +86,11 @@
 
    Example:
    (= (just 2) (fmap inc (just 1)))"
-  [fun monad]
-  {:pre [(satisfies? MonadInstance monad)]}
+  [fun m-val]
+  {:pre [(satisfies? MonadInstance m-val)]}
   (mlet
-   [value monad]
-   (wrap (->monad-implementation monad) (fun value))))
+   [value m-val]
+   (wrap (->monad-implementation m-val) (fun value))))
 
 (defn m-sequence
   "given a collection of monadic values
@@ -120,8 +120,8 @@
 
    Example:
    (= (id [2 3]) (map-m (comp id inc) [1 2]))"
-  [fun collection]
-  (m-sequence (map fun collection)))
+  [m-fun collection]
+  (m-sequence (map m-fun collection)))
 
 (defn join
   "given a nested monad value
@@ -129,8 +129,8 @@
 
    Example:
    (= (join (id (id 1))) (id 1))"
-  [monad]
-  (>>= monad identity))
+  [m-val]
+  (>>= m-val identity))
 
 (defn extract-m
   "given a map where the values are monad values

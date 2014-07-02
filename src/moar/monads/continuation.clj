@@ -9,14 +9,14 @@
 
 (deftype ContinuationMonad []
   Monad
-  (wrap* [_ value] (continue-with value))
-  (bind* [_ monad fun]
+  (wrap* [_ val] (continue-with val))
+  (bind* [_ m-val m-fun]
     (make-continuation
      (fn [callback]
        (call-continuation
-        monad
-        (fn [value]
-          (call-continuation (fun value) callback)))))))
+        m-val
+        (fn [val]
+          (call-continuation (m-fun val) callback)))))))
 
 (def monad (ContinuationMonad.))
 

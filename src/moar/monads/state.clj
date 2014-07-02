@@ -11,12 +11,12 @@
 
 (deftype StateMonad []
   Monad
-  (wrap* [_ value] (state-v value))
-  (bind* [_ monad fun]
+  (wrap* [_ val] (state-v val))
+  (bind* [_ m-val m-fun]
     (make-state
      (fn [state]
-       (let [[value state] (run-state monad state)]
-         (run-state (fun value) state))))))
+       (let [[value state] (run-state m-val state)]
+         (run-state (m-fun value) state))))))
 
 (def monad
   "monad implementation for the state monad"

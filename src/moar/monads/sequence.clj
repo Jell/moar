@@ -11,13 +11,13 @@
 
 (deftype SequenceMonad []
   Monad
-  (wrap* [_ value] (list value))
-  (bind* [_ monad fun]
-    (flatten* (map fun monad)))
+  (wrap* [_ val] (list val))
+  (bind* [_ m-val m-fun]
+    (flatten* (map m-fun m-val)))
   MonadPlus
   (mzero* [_] (list))
-  (mplus* [_ monad-a monad-b]
-    (flatten* [monad-a monad-b])))
+  (mplus* [_ m-val-a m-val-b]
+    (flatten* [m-val-a m-val-b])))
 
 (def monad (SequenceMonad.))
 

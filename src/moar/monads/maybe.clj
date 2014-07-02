@@ -14,12 +14,12 @@
       nothing))
   MonadPlus
   (mzero* [_] nothing)
-  (mplus* [_ monad-a monad-b]
-    (case [(just? monad-a) (just? monad-b)]
+  (mplus* [_ m-val-a m-val-b]
+    (case [(just? m-val-a) (just? m-val-b)]
       [false false] nothing
-      [ true false] monad-a
-      [false  true] monad-b
-      [ true  true] monad-a)))
+      [ true false] m-val-a
+      [false  true] m-val-b
+      [ true  true] m-val-a)))
 
 (def monad (MaybeMonad.))
 

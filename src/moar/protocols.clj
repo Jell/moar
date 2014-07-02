@@ -6,15 +6,12 @@
     "Returns the implementation of the underlying monad"))
 
 (defprotocol Monad
-  (wrap* [impl value])
-  (bind* [impl monad function]))
+  (wrap* [impl val])
+  (bind* [impl m-val m-fun]))
 
 (defprotocol MonadPlus
   (mzero* [impl])
-  (mplus* [impl monad-a monad-b]))
+  (mplus* [impl m-val-a m-val-b]))
 
-(defprotocol MonadLift
-  (lift* [impl arity function]))
-
-(defprotocol MonadTransformerImpl
-  (->monad-transformer [impl]))
+(defprotocol MonadTransformer
+  (wrap-t [impl m-fun]))
