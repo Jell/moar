@@ -15,7 +15,7 @@
            (fn [maybe-value]
              (if (maybe/just? maybe-value)
                (let [new-monad (fun @maybe-value)]
-                 (if (satisfies? RunMaybeT new-monad)
+                 (if (monad-instance? self new-monad)
                    @new-monad new-monad))
                (wrap wrapped-impl maybe/nothing))))))
   Object
