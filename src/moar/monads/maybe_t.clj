@@ -5,23 +5,26 @@
 
 (declare run-maybe-t)
 
-(deftype MaybeT [outer-monad]
+(deftype MaybeT [wrapped-impl]
   Monad
   (wrap* [_ value]
-    (run-maybe-t outer-monad (wrap outer-monad (maybe/just value))))
-  (bind* [_ monad fun]
+    (run-maybe-t wrapped-impl (wrap wrapped-impl (maybe/just value))))
+  (bind* [self monad fun]
     (run-maybe-t
-     outer-monad
+     wrapped-impl
      (bind @monad
            (fn [maybe-value]
              (if (maybe/just? maybe-value)
-               (fun @maybe-value)
-               (wrap outer-monad maybe/nothing))))))
+               (let [new-monad (fun @maybe-value)]
+                 (if (monad-instance? self new-monad)
+                   @new-monad
+                   new-monad))
+               (wrap wrapped-impl maybe/nothing))))))
   Object
   (equals [_ other]
     (and (instance? MaybeT other)
-         (= outer-monad
-            (.outer-monad other)))))
+         (= wrapped-impl
+            (.wrapped-impl other)))))
 
 (defn maybe-t [impl]
   (MaybeT. impl))
