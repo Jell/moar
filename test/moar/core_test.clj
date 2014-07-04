@@ -1,6 +1,10 @@
 (ns moar.core-test
   (:require [clojure.test :refer :all]
             [moar.core :as m]
+            [moar.protocols :refer :all]
+            [moar.monads.maybe :as maybe]
+            [moar.monads.maybe-t :refer [maybe-t]]
+            [moar.monads.sequence :as sequence]
             [moar.monads.id :refer [id]]))
 
 (deftest mlet-tests
@@ -30,3 +34,17 @@
 (deftest extract-m-test
   (is (= (id {:a 1 :b 2})
          (m/extract-m {:a (id 1) :b (id 2)}))))
+
+(deftest basic-lifting
+  (let [monad (maybe-t (maybe-t sequence/monad))
+        return (partial m/wrap monad)]
+    (is (= (m/bind (return 1) (m/lift monad inc))
+           (return 2)))))
+
+(deftest advanced-lifting
+  (let [monad (maybe-t (maybe-t sequence/monad))
+        return (partial m/wrap monad)]
+    (is (= (m/bind (return 1)
+                   (m/lift sequence/monad monad
+                           (m/lift sequence/monad inc)))
+           (return 2)))))

@@ -3,7 +3,7 @@
             [moar.core :refer :all]
             [moar.monads.sequence :as sequence]
             [moar.monads.maybe :refer [just nothing]]
-            [moar.monads.maybe-t :refer [maybe-t run-maybe-t]]))
+            [moar.monads.maybe-t :refer [maybe-t]]))
 
 (def monad (maybe-t sequence/monad))
 
@@ -17,7 +17,8 @@
                (fn [x] (wrap monad (inc x)))
                (fn [x] (wrap monad (inc x))))
          (list (just 3))))
-  (is (= @(bind (run-maybe-t (list (just 3)
+  (is (= @(bind (transformer monad
+                             (list (just 3)
                                    (just 4)
                                    nothing
                                    (just 5)))

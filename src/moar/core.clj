@@ -152,3 +152,46 @@
           (wrap impl (assoc res-map key value))))
        (wrap impl {})
        map))))
+
+(deftype Transformer [t-impl m-val]
+  clojure.lang.IDeref
+  (deref [this] m-val)
+  MonadInstance
+  (monad-implementation [_] t-impl)
+  Object
+  (equals [_ other]
+    (and (instance? Transformer other)
+         (= m-val @other))))
+
+(defn transformer [t-impl m-val]
+  (Transformer. t-impl m-val))
+
+(defn transformer? [x]
+  (instance? Transformer x))
+
+(defn intermediate-monads [m-impl-a m-impl-b]
+  {:pre [(satisfies? Monad m-impl-a)
+         (satisfies? Monad m-impl-b)]}
+  (if (= m-impl-a m-impl-b)
+    []
+    (if (satisfies? MonadTransformer m-impl-a)
+      (let [m-impl (wrapped-impl m-impl-a)]
+        (conj (intermediate-monads m-impl m-impl-b)
+              m-impl-a))
+      [])))
+
+(defn lift
+  ([m-impl fun]
+     (fn [& args]
+       (wrap m-impl (apply fun args))))
+  ([m-impl-a m-impl-b m-fun-a]
+     {:pre [(satisfies? Monad m-impl-a)
+            (satisfies? MonadTransformer m-impl-b)]}
+     (fn [& args]
+       (reduce (fn [m-val m-next]
+                 (transformer
+                  m-next
+                  (fmap (partial wrap (base-monad m-next))
+                        m-val)))
+               (apply m-fun-a args)
+               (intermediate-monads m-impl-b m-impl-a)))))

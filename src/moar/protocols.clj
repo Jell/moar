@@ -14,4 +14,5 @@
   (mplus* [impl m-val-a m-val-b]))
 
 (defprotocol MonadTransformer
-  (wrap-t [impl m-fun]))
+  (wrapped-impl [self])
+  (base-monad [self]))
