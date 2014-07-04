@@ -38,7 +38,7 @@
 (deftest basic-lifting
   (let [monad (maybe-t (maybe-t sequence/monad))
         return (partial m/wrap monad)]
-    (is (= (m/bind (return 1) (m/lift monad inc))
+    (is (= (m/bind (return 1) (m/lift-f monad inc))
            (return 2)))))
 
 (deftest advanced-lifting
@@ -46,9 +46,12 @@
         return (partial m/wrap monad)]
     (is (= (return 2)
            (m/bind (return 1)
-                   (m/lift monad (m/lift sequence/monad inc)))))
+                   (m/lift-f monad (m/lift-f sequence/monad inc)))))
     (is (= (return 2)
-           (m/lift-value monad 2)
-           (m/lift-value monad (list 2))))
+           (m/lift-v monad 2)
+           (m/lift-v monad (list 2))))
     (is (= (return 6)
-           ((m/lift-m monad +) (return 1) (return 2) (return 3))))))
+           ((m/lift-m monad +) (return 1) (return 2) (return 3))))
+    (is (= (m/lift-v monad (list 1 2 3))
+           ((m/lift-m monad list)
+            (return 1) (return 2) (return 3))))))

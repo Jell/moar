@@ -42,27 +42,26 @@ Quick example:
 (= (just 2) (just 3))
 ;;=> false
 
-(let [return (partial wrap maybe/monad)
-      lift-m (partial lift maybe/monad)]
+(let [return (partial wrap maybe/monad)]
   (>>= (return 1)
-       (lift-m inc)
-       (lift-m inc)))
+       (lift-f maybe/monad inc)
+       (lift-f maybe/monad inc)))
 ;;=> #<Just@241c11b4: 3>
 
 ;; Also: Monad transformers!
 (let [monad (maybe-t sequence/monad)
       return (partial wrap monad)]
   (>>= (return 1)
-       (lift monad inc)
-       (lift monad
-             (lift sequence/monad inc))))
+       (lift-f monad inc)
+       (lift-f monad
+               (lift-f sequence/monad inc))))
 ;;=> #<Transformer@2ec291ff: (#<Just@33053b97: 3>)>
 
 ;; Lifting monadic values
 (let [monad (maybe-t sequence/monad)
       return (partial wrap monad)]
-  (>>= (lift-value monad (list 1))
-       (lift monad inc)))
+  (>>= (lift-v monad (list 1))
+       (lift-f monad inc)))
 ;;=> #<Transformer@10bbf34: (#<Just@66bd3ffd: 2>)>
 
 (let [monad (maybe-t sequence/monad)

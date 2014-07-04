@@ -169,7 +169,10 @@
 (defn transformer? [x]
   (instance? Transformer x))
 
-(defn intermediate-monads [m-impl-a m-impl-b]
+(defn intermediate-monads
+  "Returns all the monads between a higher monad m-impl-a and a lower
+  one m-impl-b"
+  [m-impl-a m-impl-b]
   {:pre [(satisfies? Monad m-impl-a)
          (satisfies? Monad m-impl-b)]}
   (if (= m-impl-a m-impl-b)
@@ -180,7 +183,8 @@
               m-impl-a))
       [])))
 
-(defn lift-value
+(defn lift-v
+  "Lifts a monadic value to a higher monadic value"
   [m-impl val]
   {:pre [(satisfies? Monad m-impl)]}
   (if (satisfies? MonadInstance val)
@@ -193,17 +197,21 @@
      (intermediate-monads m-impl (monad-implementation val)))
     (wrap m-impl val)))
 
-(defn lift
+(defn lift-f
+  "Turns a pure function into a monadic function or a monadic function
+  to a higher monadic function"
   [m-impl fun]
   {:pre [(satisfies? Monad m-impl)]}
   (fn [& args]
-    (lift-value m-impl (apply fun args))))
+    (lift-v m-impl (apply fun args))))
 
 (defn lift-m
+  "Turns a pure function into a monad function, or a monadic function
+  into a higher monad function"
   [m-impl fun]
   (fn [& args]
     ((fn inner-fun [vals [m-val & m-vals]]
        (if m-val
          (bind m-val #(inner-fun (conj vals %) m-vals))
-         (apply (lift m-impl fun) vals)))
+         (apply (lift-f m-impl fun) vals)))
      [] args)))
