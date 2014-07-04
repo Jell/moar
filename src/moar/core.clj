@@ -182,16 +182,16 @@
 
 (defn lift
   ([m-impl fun]
+     {:pre [(satisfies? Monad m-impl)]}
      (fn [& args]
-       (wrap m-impl (apply fun args))))
-  ([m-impl-a m-impl-b m-fun-a]
-     {:pre [(satisfies? Monad m-impl-a)
-            (satisfies? MonadTransformer m-impl-b)]}
-     (fn [& args]
-       (reduce (fn [m-val m-next]
-                 (transformer
-                  m-next
-                  (fmap (partial wrap (base-monad m-next))
-                        m-val)))
-               (apply m-fun-a args)
-               (intermediate-monads m-impl-b m-impl-a)))))
+       (let [val (apply fun args)]
+         (if (satisfies? MonadInstance val)
+           (let [m-impl-a (monad-implementation val)]
+             (reduce (fn [m-val m-next]
+                       (transformer
+                        m-next
+                        (fmap (partial wrap (base-monad m-next))
+                              m-val)))
+                     val
+                     (intermediate-monads m-impl m-impl-a)))
+           (wrap m-impl (apply fun args)))))))

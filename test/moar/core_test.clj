@@ -44,7 +44,6 @@
 (deftest advanced-lifting
   (let [monad (maybe-t (maybe-t sequence/monad))
         return (partial m/wrap monad)]
-    (is (= (m/bind (return 1)
-                   (m/lift sequence/monad monad
-                           (m/lift sequence/monad inc)))
-           (return 2)))))
+    (is (= (return 2)
+           (m/bind (return 1)
+                   (m/lift monad (m/lift sequence/monad inc)))))))
