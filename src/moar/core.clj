@@ -180,18 +180,22 @@
               m-impl-a))
       [])))
 
+(defn lift-value
+  [m-impl val]
+  {:pre [(satisfies? Monad m-impl)]}
+  (if (satisfies? MonadInstance val)
+    (let [m-impl-a (monad-implementation val)]
+      (reduce (fn [m-val m-next]
+                (transformer
+                 m-next
+                 (fmap (partial wrap (base-monad m-next))
+                       m-val)))
+              val
+              (intermediate-monads m-impl m-impl-a)))
+    (wrap m-impl val)))
+
 (defn lift
-  ([m-impl fun]
-     {:pre [(satisfies? Monad m-impl)]}
-     (fn [& args]
-       (let [val (apply fun args)]
-         (if (satisfies? MonadInstance val)
-           (let [m-impl-a (monad-implementation val)]
-             (reduce (fn [m-val m-next]
-                       (transformer
-                        m-next
-                        (fmap (partial wrap (base-monad m-next))
-                              m-val)))
-                     val
-                     (intermediate-monads m-impl m-impl-a)))
-           (wrap m-impl (apply fun args)))))))
+  [m-impl fun]
+  {:pre [(satisfies? Monad m-impl)]}
+  (fn [& args]
+    (lift-value m-impl (apply fun args))))
