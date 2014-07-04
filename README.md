@@ -69,6 +69,11 @@ Quick example:
       return (partial wrap monad)]
   ((lift-m monad +) (return 1) (return 2) (return 3)))
 ;;=> #<Transformer@4583ce1e: (#<Just@2e21d86c: 6>)>
+
+(let [monad (maybe-t sequence/monad)
+      return (partial wrap monad)]
+  ((lift-m monad list) (return 1) (return 2) (return 3)))
+;;=> #<Transformer@44478429: (#<Just@10f7c67e: 1> #<Just@2bba512: 2> #<Just@2449f0b9: 3>)>
 ```
 
 ## Design Goals
