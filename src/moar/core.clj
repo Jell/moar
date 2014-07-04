@@ -183,7 +183,7 @@
               m-impl-a))
       [])))
 
-(defn lift-v
+(defn lift
   "Lifts a monadic value to a higher monadic value"
   [m-impl val]
   {:pre [(satisfies? Monad m-impl)]}
@@ -203,7 +203,7 @@
   [m-impl fun]
   {:pre [(satisfies? Monad m-impl)]}
   (fn [& args]
-    (lift-v m-impl (apply fun args))))
+    (lift m-impl (apply fun args))))
 
 (defn lift-m
   "Turns a pure function into a monad function, or a monadic function

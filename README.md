@@ -60,7 +60,7 @@ Quick example:
 ;; Lifting monadic values
 (let [monad (maybe-t sequence/monad)
       return (partial wrap monad)]
-  (>>= (lift-v monad (list 1))
+  (>>= (lift monad (list 1))
        (lift-f monad inc)))
 ;;=> #<Transformer@10bbf34: (#<Just@66bd3ffd: 2>)>
 
