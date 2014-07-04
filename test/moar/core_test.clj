@@ -46,4 +46,7 @@
         return (partial m/wrap monad)]
     (is (= (return 2)
            (m/bind (return 1)
-                   (m/lift monad (m/lift sequence/monad inc)))))))
+                   (m/lift monad (m/lift sequence/monad inc)))))
+    (is (= (return 2)
+           (m/lift-value monad 2)
+           (m/lift-value monad (list 2))))))
