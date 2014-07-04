@@ -184,14 +184,13 @@
   [m-impl val]
   {:pre [(satisfies? Monad m-impl)]}
   (if (satisfies? MonadInstance val)
-    (let [m-impl-a (monad-implementation val)]
-      (reduce (fn [m-val m-next]
-                (transformer
-                 m-next
-                 (fmap (partial wrap (base-monad m-next))
-                       m-val)))
-              val
-              (intermediate-monads m-impl m-impl-a)))
+    (reduce
+     (fn [m-val m-next]
+       (transformer
+        m-next
+        (fmap (partial wrap (base-monad m-next)) m-val)))
+     val
+     (intermediate-monads m-impl (monad-implementation val)))
     (wrap m-impl val)))
 
 (defn lift
