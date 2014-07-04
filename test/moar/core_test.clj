@@ -49,4 +49,6 @@
                    (m/lift monad (m/lift sequence/monad inc)))))
     (is (= (return 2)
            (m/lift-value monad 2)
-           (m/lift-value monad (list 2))))))
+           (m/lift-value monad (list 2))))
+    (is (= (return 6)
+           ((m/lift-m monad +) (return 1) (return 2) (return 3))))))

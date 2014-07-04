@@ -198,3 +198,12 @@
   {:pre [(satisfies? Monad m-impl)]}
   (fn [& args]
     (lift-value m-impl (apply fun args))))
+
+(defn lift-m
+  [m-impl fun]
+  (fn [& args]
+    ((fn inner-fun [vals [m-val & m-vals]]
+       (if m-val
+         (bind m-val #(inner-fun (conj vals %) m-vals))
+         (apply (lift m-impl fun) vals)))
+     [] args)))
