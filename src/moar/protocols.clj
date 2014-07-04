@@ -2,7 +2,7 @@
 
 (defprotocol MonadInstance
   "A monadic value should satisfy this protocol"
-  (->monad-implementation [t]
+  (monad-implementation [t]
     "Returns the implementation of the underlying monad"))
 
 (defprotocol Monad

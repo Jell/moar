@@ -15,7 +15,7 @@
   clojure.lang.IDeref
   (deref [this] value)
   MonadInstance
-  (->monad-implementation [_] monad)
+  (monad-implementation [_] monad)
   Object
   (equals [_ other]
     (and (instance? ID other) (= value @other))))

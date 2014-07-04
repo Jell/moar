@@ -23,6 +23,6 @@
 
 (extend-protocol MonadInstance
   clojure.lang.LazySeq
-  (->monad-implementation [_] monad)
+  (monad-implementation [_] monad)
   clojure.lang.IPersistentList
-  (->monad-implementation [_] monad))
+  (monad-implementation [_] monad))

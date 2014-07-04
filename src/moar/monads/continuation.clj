@@ -26,7 +26,7 @@
   Continuation
   (call-continuation [_ callback] (function callback))
   MonadInstance
-  (->monad-implementation [_] monad))
+  (monad-implementation [_] monad))
 
 (defn make-continuation
   "construct a continuation function"

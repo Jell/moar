@@ -26,7 +26,7 @@
   State
   (run-state [_ init-state] (fun init-state))
   MonadInstance
-  (->monad-implementation [_] monad))
+  (monad-implementation [_] monad))
 
 (defn make-state
   "constructs a instance of state function given a function"

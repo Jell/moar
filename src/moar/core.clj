@@ -6,7 +6,7 @@
   "Checks whether monads have the given implementation"
   [m-impl & m-vals]
   (every? #(and (satisfies? MonadInstance %)
-                (= m-impl (->monad-implementation %)))
+                (= m-impl (monad-implementation %)))
           m-vals))
 
 (defn same-monad?
@@ -15,8 +15,8 @@
   (and
    (satisfies? MonadInstance m-val-a)
    (satisfies? MonadInstance m-val-b)
-   (= (->monad-implementation m-val-a)
-      (->monad-implementation m-val-b))))
+   (= (monad-implementation m-val-a)
+      (monad-implementation m-val-b))))
 
 (defn wrap
   "Wraps a value in a monad"
@@ -27,7 +27,7 @@
   "Applies a function returning a monad to a monad of the same kind"
   ([m-val m-fun]
      {:pre [(satisfies? MonadInstance m-val)]}
-     (bind (->monad-implementation m-val) m-val m-fun))
+     (bind (monad-implementation m-val) m-val m-fun))
   ([m-impl m-val m-fun]
      {:post [(same-monad? m-val %)]}
      (bind* m-impl m-val m-fun)))
@@ -56,7 +56,7 @@
 (defn mplus
   "Mean of combining two monads"
   ([m-val-a m-val-b]
-     (mplus (->monad-implementation m-val-a) m-val-a m-val-b))
+     (mplus (monad-implementation m-val-a) m-val-a m-val-b))
   ([impl m-val-a m-val-b]
      {:pre [(monad-instance? impl m-val-a m-val-b)]}
      (mplus* impl m-val-a m-val-b)))
@@ -90,7 +90,7 @@
   {:pre [(satisfies? MonadInstance m-val)]}
   (mlet
    [value m-val]
-   (wrap (->monad-implementation m-val) (fun value))))
+   (wrap (monad-implementation m-val) (fun value))))
 
 (defn m-sequence
   "given a collection of monadic values
@@ -103,7 +103,7 @@
   [collection]
   (if (empty? collection)
     collection
-    (let [impl (->monad-implementation (first collection))]
+    (let [impl (monad-implementation (first collection))]
       (reduce
        (fn [m item]
          (mlet
@@ -143,7 +143,7 @@
   [map]
   (if (empty? map)
     map
-    (let [impl (->monad-implementation (first (vals map)))]
+    (let [impl (monad-implementation (first (vals map)))]
       (reduce
        (fn [m [key item]]
          (mlet

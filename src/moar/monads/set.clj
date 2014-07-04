@@ -16,4 +16,4 @@
 
 (extend-protocol MonadInstance
   clojure.lang.IPersistentSet
-  (->monad-implementation [_] monad))
+  (monad-implementation [_] monad))

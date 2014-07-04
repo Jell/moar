@@ -22,7 +22,7 @@
   Result
   (success? [_] true)
   MonadInstance
-  (->monad-implementation [_] monad)
+  (monad-implementation [_] monad)
   Object
   (equals [_ other]
     (and (instance? SuccessResult other)
@@ -36,7 +36,7 @@
   Result
   (success? [_] false)
   MonadInstance
-  (->monad-implementation [_] monad)
+  (monad-implementation [_] monad)
   Object
   (equals [_ other]
     (and (instance? FailResult other)

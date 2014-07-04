@@ -29,7 +29,7 @@
   Maybe
   (just? [_] true)
   MonadInstance
-  (->monad-implementation [_] monad)
+  (monad-implementation [_] monad)
   Object
   (equals [_ other]
     (and (instance? Just other)
@@ -43,7 +43,7 @@
   Maybe
   (just? [_] false)
   MonadInstance
-  (->monad-implementation [_] monad)
+  (monad-implementation [_] monad)
   Object
   (equals [_ other] (instance? Nothing)))
 
