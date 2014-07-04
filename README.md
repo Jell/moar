@@ -64,6 +64,11 @@ Quick example:
   (>>= (lift-value monad (list 1))
        (lift monad inc)))
 ;;=> #<Transformer@10bbf34: (#<Just@66bd3ffd: 2>)>
+
+(let [monad (maybe-t sequence/monad)
+      return (partial wrap monad)]
+  ((lift-m monad +) (return 1) (return 2) (return 3)))
+;;=> #<Transformer@4583ce1e: (#<Just@2e21d86c: 6>)>
 ```
 
 ## Design Goals
