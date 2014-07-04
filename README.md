@@ -14,7 +14,9 @@ Quick example:
 ```lisp
 (ns moar.example
     (:require [moar.core :refer :all]
-              [moar.monads.maybe :as maybe :refer [just nothing]]))
+              [moar.monads.sequence :as sequence]
+              [moar.monads.maybe :as maybe :refer [just nothing]]
+              [moar.monads.maybe-t :refer [maybe-t]]))
 
 (wrap maybe/monad :tobias)
 ;;=> #<Just@74de792d: :tobias>
@@ -39,6 +41,23 @@ Quick example:
 
 (= (just 2) (just 3))
 ;;=> false
+
+(let [return (partial wrap maybe/monad)
+      lift-m (partial lift maybe/monad)]
+  (>>= (return 1)
+       (lift-m inc)
+       (lift-m inc)))
+;;=> #<Just@241c11b4: 3>
+
+;; Also: Monad transformers!
+(let [monad (maybe-t sequence/monad)
+      return (partial wrap monad)]
+  (>>= (return 1)
+       (lift monad inc)
+       (lift monad
+             (lift sequence/monad
+                   inc))))
+;;=> #<Transformer@2ec291ff: (#<Just@33053b97: 3>)>
 ```
 
 ## Design Goals
