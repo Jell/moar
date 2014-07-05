@@ -3,13 +3,13 @@
             [moar.core :refer :all]
             [moar.monads.maybe :as maybe]))
 
-(deftype MaybeT [wrapped-impl]
+(deftype MaybeT [wrapper-impl]
   MonadTransformer
-  (wrapped-impl [_] wrapped-impl)
+  (wrapper-impl [_] wrapper-impl)
   (base-monad [_] maybe/monad)
   Monad
   (wrap* [self value]
-    (transformer self (wrap wrapped-impl (maybe/just value))))
+    (transformer self (wrap wrapper-impl (maybe/just value))))
   (bind* [self monad fun]
     (transformer
      self
@@ -19,12 +19,12 @@
                (let [new-monad (fun @maybe-value)]
                  (if (transformer? new-monad)
                    @new-monad new-monad))
-               (wrap wrapped-impl maybe/nothing))))))
+               (wrap wrapper-impl maybe/nothing))))))
   Object
   (equals [_ other]
     (and (instance? MaybeT other)
-         (= wrapped-impl
-            (.wrapped-impl other)))))
+         (= wrapper-impl
+            (.wrapper-impl other)))))
 
 (defn maybe-t [m-impl]
   (MaybeT. m-impl))

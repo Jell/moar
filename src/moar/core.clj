@@ -178,7 +178,7 @@
   (if (= m-impl-a m-impl-b)
     []
     (if (satisfies? MonadTransformer m-impl-a)
-      (let [m-impl (wrapped-impl m-impl-a)]
+      (let [m-impl (wrapper-impl m-impl-a)]
         (conj (intermediate-monads m-impl m-impl-b)
               m-impl-a))
       (throw (Exception. "m-impl-b is not a sub-monad of m-impl-a")))))
