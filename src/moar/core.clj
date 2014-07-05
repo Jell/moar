@@ -181,7 +181,7 @@
       (let [m-impl (wrapped-impl m-impl-a)]
         (conj (intermediate-monads m-impl m-impl-b)
               m-impl-a))
-      [])))
+      (throw (Exception. "m-impl-b is not a sub-monad of m-impl-a")))))
 
 (defn lift
   "Lifts a monadic value to a higher monadic value"

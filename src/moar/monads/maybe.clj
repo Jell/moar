@@ -1,7 +1,7 @@
 (ns moar.monads.maybe
   (:require [moar.protocols :refer :all]))
 
-(declare just nothing)
+(declare just nothing maybe-or)
 (defprotocol Maybe
   (just? [this]))
 
@@ -14,12 +14,7 @@
       nothing))
   MonadPlus
   (mzero* [_] nothing)
-  (mplus* [_ m-val-a m-val-b]
-    (case [(just? m-val-a) (just? m-val-b)]
-      [false false] nothing
-      [ true false] m-val-a
-      [false  true] m-val-b
-      [ true  true] m-val-a)))
+  (mplus* [_ m-val-a m-val-b] (maybe-or m-val-a m-val-b)))
 
 (def monad (MaybeMonad.))
 
@@ -48,3 +43,10 @@
   (equals [_ other] (instance? Nothing)))
 
 (def nothing (Nothing.))
+
+(defn maybe-or [maybe-a maybe-b]
+  (case [(just? maybe-a) (just? maybe-b)]
+    [false false] nothing
+    [ true false] maybe-a
+    [false  true] maybe-b
+    [ true  true] maybe-a))
