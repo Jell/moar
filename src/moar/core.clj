@@ -169,18 +169,24 @@
 (defn transformer? [x]
   (instance? Transformer x))
 
+(defn monad-transformers-chain
+  [m-impl]
+  {:pre [(satisfies? Monad m-impl)]}
+  (if (satisfies? MonadTransformer m-impl)
+    (conj (monad-transformers-chain (wrapper-impl m-impl))
+          m-impl)
+    [m-impl]))
+
 (defn intermediate-monads
   "Returns all the monads between a higher monad m-impl-a and a lower
   one m-impl-b"
   [m-impl-a m-impl-b]
   {:pre [(satisfies? Monad m-impl-a)
          (satisfies? Monad m-impl-b)]}
-  (if (= m-impl-a m-impl-b)
-    []
-    (if (satisfies? MonadTransformer m-impl-a)
-      (let [m-impl (wrapper-impl m-impl-a)]
-        (conj (intermediate-monads m-impl m-impl-b)
-              m-impl-a))
+  (let [[above below] (split-with (partial = m-impl-b)
+                                  (monad-transformers-chain m-impl-a))]
+    (if (seq below)
+      below
       (throw (Exception. "m-impl-b is not a sub-monad of m-impl-a")))))
 
 (defn lift
