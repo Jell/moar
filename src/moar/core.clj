@@ -183,10 +183,10 @@
   [m-impl-a m-impl-b]
   {:pre [(satisfies? Monad m-impl-a)
          (satisfies? Monad m-impl-b)]}
-  (let [[above below] (split-with (partial = m-impl-b)
-                                  (monad-transformers-chain m-impl-a))]
+  (let [below (drop-while (partial not= m-impl-b)
+                          (monad-transformers-chain m-impl-a))]
     (if (seq below)
-      below
+      (drop 1 below)
       (throw (Exception. "m-impl-b is not a sub-monad of m-impl-a")))))
 
 (defn lift
