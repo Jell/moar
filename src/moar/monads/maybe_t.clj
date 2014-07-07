@@ -1,12 +1,15 @@
 (ns moar.monads.maybe-t
   (:require [moar.protocols :refer :all]
             [moar.core :refer :all]
-            [moar.monads.maybe :as maybe]))
+            [moar.monads.maybe :as maybe])
+  (:import [moar.monads.maybe MaybeMonad]))
+
+(declare maybe-t)
 
 (deftype MaybeT [wrapper-impl]
   MonadTransformer
   (wrapper-impl [_] wrapper-impl)
-  (base-monad [_] maybe/monad)
+  (base-monad* [_] maybe/monad)
   Monad
   (wrap* [self value]
     (transformer self (wrap wrapper-impl (maybe/just value))))
@@ -28,3 +31,8 @@
 
 (defn maybe-t [m-impl]
   (MaybeT. m-impl))
+
+(extend MaybeMonad
+  MonadTransformable
+  {:transformer-impl (fn [_ wrapper-impl]
+                       (maybe-t wrapper-impl))})

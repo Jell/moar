@@ -1,6 +1,6 @@
 (ns moar.core-test
   (:require [clojure.test :refer :all]
-            [moar.core :as m]
+            [moar.core :refer :all]
             [moar.protocols :refer :all]
             [moar.monads.maybe :as maybe]
             [moar.monads.maybe-t :refer [maybe-t]]
@@ -9,7 +9,7 @@
 
 (deftest mlet-tests
   (testing "binding id monads"
-    (is (= 9 @(m/mlet
+    (is (= 9 @(mlet
                [a (id 2)
                 b (id 3)
                 :let [v (+ a b)]
@@ -18,40 +18,52 @@
 
 (deftest fmap-tests
   (testing "fmapping over id monads"
-    (is (= 3 @(m/fmap inc (id 2))))))
+    (is (= 3 @(fmap inc (id 2))))))
 
 (deftest m-sequence-tests
   (testing "calling sequence across id monads"
-    (is (= (m/m-sequence [(id 1) (id 2)]) (id [1 2])))))
+    (is (= (m-sequence [(id 1) (id 2)]) (id [1 2])))))
 
 (deftest map-m-tests
   (testing "map-m over id monads"
-    (is (= (id [2 3]) (m/map-m (comp id inc) [1 2])))))
+    (is (= (id [2 3]) (map-m (comp id inc) [1 2])))))
 
 (deftest join-test
-  (is (= (m/join (id (id 1))) (id 1))))
+  (is (= (join (id (id 1))) (id 1))))
 
 (deftest extract-m-test
   (is (= (id {:a 1 :b 2})
-         (m/extract-m {:a (id 1) :b (id 2)}))))
+         (extract-m {:a (id 1) :b (id 2)}))))
 
 (deftest basic-lifting
   (let [monad (maybe-t (maybe-t sequence/monad))
-        return (partial m/wrap monad)]
-    (is (= (m/bind (return 1) (m/lift-f monad inc))
+        return (partial wrap monad)]
+    (is (= (bind (return 1) (lift-f monad inc))
            (return 2)))))
 
 (deftest advanced-lifting
   (let [monad (maybe-t (maybe-t sequence/monad))
-        return (partial m/wrap monad)]
+        return (partial wrap monad)]
     (is (= (return 2)
-           (m/bind (return 1)
-                   (m/lift-f monad (m/lift-f sequence/monad inc)))))
+           (bind (return 1)
+                   (lift-f monad (lift-f sequence/monad inc)))))
     (is (= (return 2)
-           (m/lift monad 2)
-           (m/lift monad (list 2))))
+           (lift monad 2)
+           (lift monad (list 2))))
     (is (= (return 6)
-           ((m/lift-m monad +) (return 1) (return 2) (return 3))))
-    (is (= (m/lift monad (list 1 2 3))
-           ((m/lift-m monad list)
+           ((lift-m monad +) (return 1) (return 2) (return 3))))
+    (is (= (lift monad (list 1 2 3))
+           ((lift-m monad list)
             (return 1) (return 2) (return 3))))))
+
+(deftest morphing
+  (let [monad (maybe-t (maybe-t sequence/monad))
+        return (partial wrap monad)]
+    (is (= (return 1)
+           (morph monad (maybe/just 1))
+           (morph monad (list 1))))
+    (is (= (return 4)
+           (>>= (return 1)
+                (morph-f monad #(maybe/just (inc %)))
+                (morph-f monad #(list (inc %)))
+                (lift-f monad inc))))))

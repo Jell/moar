@@ -14,6 +14,7 @@ Quick example:
 ```lisp
 (ns moar.example
     (:require [moar.core :refer :all]
+              [moar.protocols :refer :all]
               [moar.monads.sequence :as sequence]
               [moar.monads.maybe :as maybe :refer [just nothing]]
               [moar.monads.maybe-t :refer [maybe-t]]))

@@ -13,6 +13,9 @@
   (mzero* [impl])
   (mplus* [impl m-val-a m-val-b]))
 
+(defprotocol MonadTransformable
+  (transformer-impl [self wrapper-impl]))
+
 (defprotocol MonadTransformer
   (wrapper-impl [self])
-  (base-monad [self]))
+  (base-monad* [self]))

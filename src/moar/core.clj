@@ -1,5 +1,6 @@
 (ns moar.core
-  (:require [moar.protocols :refer :all]
+  (:require [moar.utils :refer :all]
+            [moar.protocols :refer :all]
             [moar.monads.id :refer [id]]))
 
 (defn monad-instance?
@@ -161,6 +162,7 @@
   Object
   (equals [_ other]
     (and (instance? Transformer other)
+         (= t-impl (.t-impl other))
          (= m-val @other))))
 
 (defn transformer [t-impl m-val]
@@ -168,6 +170,10 @@
 
 (defn transformer? [x]
   (instance? Transformer x))
+
+(defn base-monad [m-impl]
+  (if (satisfies? MonadTransformer m-impl)
+    (base-monad* m-impl) m-impl))
 
 (defn monad-transformers-chain
   [m-impl]
@@ -190,7 +196,8 @@
       (throw (Exception. "m-impl-b is not a sub-monad of m-impl-a")))))
 
 (defn lift
-  "Lifts a monadic value to a higher monadic value"
+  "Lifts a monadic value whose monad is a wrapper of m-impl to a monadic
+  value of m-impl"
   [m-impl val]
   {:pre [(satisfies? Monad m-impl)]}
   (if (satisfies? MonadInstance val)
@@ -198,22 +205,22 @@
      (fn [m-val m-next]
        (transformer
         m-next
-        (fmap (partial wrap (base-monad m-next)) m-val)))
+        (fmap (partial wrap (base-monad* m-next)) m-val)))
      val
      (intermediate-monads m-impl (monad-implementation val)))
     (wrap m-impl val)))
 
 (defn lift-f
-  "Turns a pure function into a monadic function or a monadic function
-  to a higher monadic function"
+  "Turns a pure function or a monadic function whose monad is a wrapper
+  of m-impl into a higher monadic function whose monad is m-impl"
   [m-impl fun]
   {:pre [(satisfies? Monad m-impl)]}
   (fn [& args]
     (lift m-impl (apply fun args))))
 
 (defn lift-m
-  "Turns a pure function into a monad function, or a monadic function
-  into a higher monad function"
+  "Turns a pure function or a monadic function whose monad is a wrapper
+  of m-impl into a higher monad function in m-impl"
   [m-impl fun]
   (fn [& args]
     ((fn inner-fun [vals [m-val & m-vals]]
@@ -221,3 +228,43 @@
          (bind m-val #(inner-fun (conj vals %) m-vals))
          (apply (lift-f m-impl fun) vals)))
      [] args)))
+
+(defn lower
+  "Pushes m-val into the monad m-impl"
+  [m-impl m-val]
+  (if (instance? Transformer m-val)
+    (transformer (.t-impl m-val) (lower m-impl @m-val))
+    (transformer (transformer-impl (monad-implementation m-val)
+                                   m-impl)
+                 (wrap (base-monad m-impl)
+                       m-val))))
+
+(defn morph
+  "Transforms a monadic value m-val whose monad is anywhere in the monad
+  transformers chain of m-impl into a monadic value of m-impl"
+  [m-impl m-val]
+  {:pre [(satisfies? MonadTransformer m-impl)
+         (satisfies? MonadInstance m-val)
+         (not (satisfies? MonadTransformer m-val))]}
+  (let [monad-chain-a (monad-transformers-chain m-impl)
+        m-impl-b (monad-implementation m-val)
+        [below m above] (split-with-last
+                         #(= m-impl-b
+                             (base-monad %))
+                         monad-chain-a)]
+    (if m
+      (reduce
+       (fn [m-val-sub m-impl-sub] (lower m-impl-sub m-val-sub))
+       (if (seq above) (lift (last above) m-val) m-val)
+       (reverse below))
+      (throw (Exception. "the monad of m-val is not present in the
+              monad chain of m-impl")))))
+
+(defn morph-f
+  "Turns a pure function or a monadic function returning a monadic value
+  whose monad is anywhere in the monad transformer chain of m-impl to a
+  higher monadic function whose monad is m-impl"
+  [m-impl fun]
+  {:pre [(satisfies? Monad m-impl)]}
+  (fn [& args]
+    (morph m-impl (apply fun args))))
