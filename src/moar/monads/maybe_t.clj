@@ -13,16 +13,15 @@
   Monad
   (wrap* [self value]
     (transformer self (wrap wrapper-impl (maybe/just value))))
-  (bind* [self monad fun]
+  (bind* [self m-val m-fun]
     (transformer
      self
-     (bind @monad
-           (fn [maybe-value]
-             (if (maybe/just? maybe-value)
-               (let [new-monad (fun @maybe-value)]
-                 (if (transformer? new-monad)
-                   @new-monad new-monad))
-               (wrap wrapper-impl maybe/nothing))))))
+     (bind* wrapper-impl
+            @m-val
+            (fn [maybe-value]
+              (if (maybe/just? maybe-value)
+                @(m-fun @maybe-value)
+                (wrap wrapper-impl maybe/nothing))))))
   Object
   (equals [_ other]
     (and (instance? MaybeT other)

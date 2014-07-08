@@ -8,10 +8,7 @@
 (deftype MaybeMonad []
   Monad
   (wrap* [_ value] (just value))
-  (bind* [_ monad fun]
-    (if (just? monad)
-      (fun @monad)
-      nothing))
+  (bind* [_ monad fun] (if (just? monad) (fun @monad) nothing))
   MonadPlus
   (mzero* [_] nothing)
   (mplus* [_ m-val-a m-val-b] (maybe-or m-val-a m-val-b)))
