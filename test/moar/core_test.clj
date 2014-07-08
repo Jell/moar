@@ -4,6 +4,8 @@
             [moar.protocols :refer :all]
             [moar.monads.maybe :as maybe]
             [moar.monads.maybe-t :refer [maybe-t]]
+            [moar.monads.result :as result]
+            [moar.monads.result-t :refer [result-t]]
             [moar.monads.sequence :as sequence]
             [moar.monads.id :refer [id]]))
 
@@ -57,13 +59,15 @@
             (return 1) (return 2) (return 3))))))
 
 (deftest morphing
-  (let [monad (maybe-t (maybe-t sequence/monad))
+  (let [monad (maybe-t (result-t sequence/monad))
         return (partial wrap monad)]
     (is (= (return 1)
+           (morph monad (result/result 1))
            (morph monad (maybe/just 1))
            (morph monad (list 1))))
-    (is (= (return 4)
+    (is (= (return 5)
            (>>= (return 1)
                 (morph-f monad #(maybe/just (inc %)))
+                (morph-f monad #(result/result (inc %)))
                 (morph-f monad #(list (inc %)))
                 (lift-f monad inc))))))

@@ -193,7 +193,7 @@
                           (monad-transformers-chain m-impl-a))]
     (if (seq below)
       (drop 1 below)
-      (throw (Exception. "m-impl-b is not a sub-monad of m-impl-a")))))
+      (throw (Exception. (str m-impl-b " is not a sub-monad of " m-impl-a))))))
 
 (defn lift
   "Lifts a monadic value whose monad is a wrapper of m-impl to a monadic
@@ -253,10 +253,13 @@
                              (base-monad %))
                          monad-chain-a)]
     (if m
-      (reduce
-       (fn [m-val-sub m-impl-sub] (lower m-impl-sub m-val-sub))
-       (if (seq above) (lift (last above) m-val) m-val)
-       (reverse below))
+      (let [lowered (reduce (fn [m-val-sub m-impl-sub]
+                              (lower m-impl-sub m-val-sub))
+                            m-val
+                            (reverse below))]
+        (if (seq above)
+          (lift (last above) lowered)
+          lowered))
       (throw (Exception. "the monad of m-val is not present in the
               monad chain of m-impl")))))
 
