@@ -38,13 +38,13 @@
          (extract-m {:a (id 1) :b (id 2)}))))
 
 (deftest basic-lifting
-  (let [monad (maybe-t (maybe-t sequence/monad))
+  (let [monad (maybe-t (result-t sequence/monad))
         return (partial wrap monad)]
     (is (= (bind (return 1) (lift-f monad inc))
            (return 2)))))
 
 (deftest advanced-lifting
-  (let [monad (maybe-t (maybe-t sequence/monad))
+  (let [monad (maybe-t (result-t sequence/monad))
         return (partial wrap monad)]
     (is (= (return 2)
            (bind (return 1)
