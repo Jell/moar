@@ -168,12 +168,24 @@
 (defn transformer [t-impl m-val]
   (Transformer. t-impl m-val))
 
-(defn transformer? [x]
-  (instance? Transformer x))
-
 (defn base-monad [m-impl]
   (if (satisfies? MonadTransformer m-impl)
     (base-monad* m-impl) m-impl))
+
+(defn monads-stack
+  "Returns a stack of monad transformers with the given monads, stacking them from the outside in.
+
+  Example:
+  (= (monads-stack sequence/monad result/monad maybe/monad)
+     (result-t/monad (maybe-t sequence/monad)))"
+  [outer-monad & inner-monads]
+  {:pre [(satisfies? Monad outer-monad)
+         (every? (partial satisfies? MonadTransformable)
+                 inner-monads)]}
+  (reduce (fn [impl next-impl]
+            (transformer-impl next-impl impl))
+          outer-monad
+          inner-monads))
 
 (defn monad-transformers-chain
   [m-impl]

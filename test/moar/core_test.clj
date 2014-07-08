@@ -44,7 +44,9 @@
            (return 2)))))
 
 (deftest advanced-lifting
-  (let [monad (maybe-t (result-t sequence/monad))
+  (let [monad (monads-stack sequence/monad
+                            result/monad
+                            maybe/monad)
         return (partial wrap monad)]
     (is (= (return 2)
            (bind (return 1)
