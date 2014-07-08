@@ -71,9 +71,9 @@
    :else             `(>>= ~expr (fn [~binding] ~(mlet-body rest body)))))
 
 (defmacro mlet
-  "Evaluates the body in a lexical context where the symbols in
-  bindings are bound to the return value of their respective
-  monads. A :let modifier can be used to bind non-monadic values.
+  "Evaluates the body in a lexical context where the symbols in bindings
+  are bound to the return value of their respective monads. A :let
+  modifier can be used to bind non-monadic values.
 
   Example:
   (mlet [x (just 5) y (just 2) :let [z (+ x y)]] (just z))"
@@ -81,12 +81,11 @@
   (mlet-body bindings body))
 
 (defn fmap
-  "takes a function and a monad and
-   returns a new monad with that function applied
-   to the value
+  "takes a function and a monad and returns a new monad with that
+  function applied to the value
 
-   Example:
-   (= (just 2) (fmap inc (just 1)))"
+  Example:
+  (= (just 2) (fmap inc (just 1)))"
   [fun m-val]
   {:pre [(satisfies? MonadInstance m-val)]}
   (mlet
@@ -94,13 +93,11 @@
    (wrap (monad-implementation m-val) (fun value))))
 
 (defn m-sequence
-  "given a collection of monadic values
-   it returns a monadic value where the value
-   is a collection of the values in the given
-   monadic values
+  "given a collection of monadic values it returns a monadic value where
+  the value is a collection of the values in the given monadic values
 
-   Example:
-   (= (m-sequence [(id 1) (id 2)]) (id [1 2]))"
+  Example:
+  (= (m-sequence [(id 1) (id 2)]) (id [1 2]))"
   [collection]
   (if (empty? collection)
     collection
@@ -115,32 +112,30 @@
        collection))))
 
 (defn map-m
-  "given a collection and a function
-   from items in that collection to a monadic value
-   map-m returns a monad containing a list of those values
+  "given a collection and a function from items in that collection to a
+  monadic value map-m returns a monad containing a list of those values
 
-   Example:
-   (= (id [2 3]) (map-m (comp id inc) [1 2]))"
+  Example:
+  (= (id [2 3]) (map-m (comp id inc) [1 2]))"
   [m-fun collection]
   (m-sequence (map m-fun collection)))
 
 (defn join
-  "given a nested monad value
-   join lifts the value up and gives you a flat monadic value
+  "given a nested monad value join lifts the value up and gives you a
+  flat monadic value
 
-   Example:
-   (= (join (id (id 1))) (id 1))"
+  Example:
+  (= (join (id (id 1))) (id 1))"
   [m-val]
   (>>= m-val identity))
 
 (defn extract-m
-  "given a map where the values are monad values
-   it returns a monad where the value is a map
-   and the values are the values of the input
-   monads
+  "given a map where the values are monad values it returns a monad
+  where the value is a map and the values are the values of the input
+  monads
 
-   Example:
-   (= (id {:a 1 :b 2}) (extract-m {:a (id 1) :b (id 2)}))"
+  Example:
+  (= (id {:a 1 :b 2}) (extract-m {:a (id 1) :b (id 2)}))"
   [map]
   (if (empty? map)
     map
@@ -168,12 +163,16 @@
 (defn transformer [t-impl m-val]
   (Transformer. t-impl m-val))
 
-(defn base-monad [m-impl]
+(defn base-monad
+  "Returns the base monad for a monad transformer, or the monad itself
+  otherswise"
+  [m-impl]
   (if (satisfies? MonadTransformer m-impl)
     (base-monad* m-impl) m-impl))
 
 (defn monads-stack
-  "Returns a stack of monad transformers with the given monads, stacking them from the outside in.
+  "Returns a stack of monad transformers with the given monads,
+  stacking them from the outside in.
 
   Example:
   (= (monads-stack sequence/monad result/monad maybe/monad)
