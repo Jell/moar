@@ -250,18 +250,16 @@
                  (wrap (base-monad m-impl)
                        m-val))))
 
-(defn morph
-  "Transforms a monadic value m-val whose monad is anywhere in the monad
-  transformers chain of m-impl into a monadic value of m-impl"
-  [m-impl m-val]
-  {:pre [(satisfies? MonadTransformer m-impl)
+(defn morph-nth [n m-impl m-val]
+  {:pre [(>= n 0)
+         (satisfies? MonadTransformer m-impl)
          (satisfies? MonadInstance m-val)
          (not (satisfies? MonadTransformer m-val))]}
   (let [monad-chain-a (monad-transformers-chain m-impl)
         m-impl-b (monad-implementation m-val)
-        [below m above] (split-with-last
-                         #(= m-impl-b
-                             (base-monad %))
+        [below m above] (split-with-nth-from-last
+                         n
+                         #(= m-impl-b (base-monad %))
                          monad-chain-a)]
     (if m
       (let [lowered (reduce (fn [m-val-sub m-impl-sub]
@@ -271,8 +269,19 @@
         (if (seq above)
           (lift (last above) lowered)
           lowered))
-      (throw (Exception. "the monad of m-val is not present in the
-              monad chain of m-impl")))))
+      (throw
+       (Exception.
+        (str "the "
+             (class m-impl-b)
+             " monad is not present"
+             (if (> n 0) (str " at index " n))
+             " in the monad chain of m-impl"))))))
+
+(defn morph
+  "Transforms a monadic value m-val whose monad is anywhere in the monad
+  transformers chain of m-impl into a monadic value of m-impl"
+  [m-impl m-val]
+  (morph-nth 0 m-impl m-val))
 
 (defn morph-f
   "Turns a pure function or a monadic function returning a monadic value

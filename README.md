@@ -92,6 +92,7 @@ Quick example:
 - `m-val`: monadic values (MonadInstance m => m a)
 - `m-fun`: monadic functions (a -> m a)
 - `m-impl`: implementation of a monad (Monad, MonadPlus)
+- `t-impl`: implementation of a monad transformer
 
 ## Notes
 

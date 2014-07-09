@@ -73,3 +73,25 @@
                 (morph-f monad #(result/result (inc %)))
                 (morph-f monad #(list (inc %)))
                 (lift-f monad inc))))))
+
+(deftest nested-morphing
+  (let [monad (maybe-t (maybe-t maybe/monad))
+        return (partial wrap monad)]
+    (is (= (maybe/just (maybe/just maybe/nothing))
+           @@(morph monad maybe/nothing)
+           @@(morph-nth 0 monad maybe/nothing)))
+
+    (is (= (maybe/just maybe/nothing)
+           @@(morph-nth 1 monad maybe/nothing)))
+
+    (is (= maybe/nothing
+           @@(morph-nth 2 monad maybe/nothing))))
+
+  (let [monad (maybe-t (result-t maybe/monad))
+        return (partial wrap monad)]
+    (is (= (maybe/just (result/result maybe/nothing))
+           @@(morph monad maybe/nothing)
+           @@(morph-nth 0 monad maybe/nothing)))
+
+    (is (= maybe/nothing
+           @@(morph-nth 1 monad maybe/nothing)))))
