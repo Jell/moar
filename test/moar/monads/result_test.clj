@@ -14,7 +14,7 @@
       (is (= 3 @r))
       (is (= r (result 3)))))
 
-  (testing "short circuit's if a failing value is introdused"
+  (testing "short circuits if a failing value is introduced"
     (let [r (mlet
              [a (result 1)
               b (result 2)
