@@ -1,7 +1,7 @@
 (ns moar.monads.result-test
-  (:use [clojure.test]
-        [moar.monads.result])
-  (:require [moar.core :refer :all]
+  (:require [clojure.test :refer :all]
+            [moar.core :refer :all]
+            [moar.monads.result :as result :refer [result fail success?]]
             [moar.monads.state :as state]))
 
 (deftest result-monad
@@ -24,23 +24,23 @@
       (is (= :some-reason @r))
       (is (= r (fail :some-reason))))))
 
-(def result-state (monad-t state/monad))
-
 (deftest result-monad-transformer-test
-  (testing "basic wrapping/unwrapping"
-    (is (= (state/->Pair 1 (result 1))
-           (@(wrap result-state 1) 1))))
+  (let [monad (-> state/monad result/monad-t)
+        return (partial wrap monad)]
 
-  (testing "basic bind call"
-    (is (= (state/->Pair 1 (result 2))
-           (@(fmap inc (wrap result-state 1)) 1))))
+    (testing "basic wrapping/unwrapping"
+      (is (= (state/->Pair 1 (result 1))
+             (@(return 1) 1))))
 
-  (testing "can lift state side effects into result monad"
-    (let [return (partial wrap result-state)
-          trans (mlet [a (return 1)
-                       b (lift result-state (>> (state/modify state/monad inc)
-                                                (wrap state/monad 2)))
-                       x (lower result-state (fail (+ a b)))]
-                      (return "never runned"))
-          res (@trans 5)]
-      (is (= (state/->Pair 6 (fail 3)) res)))))
+    (testing "basic bind call"
+      (is (= (state/->Pair 1 (result 2))
+             (@(fmap inc (return 1)) 1))))
+
+    (testing "can lift state side effects into result monad"
+      (let [trans (mlet [a (return 1)
+                         b (lift monad (>> (state/modify state/monad inc)
+                                                  (wrap state/monad 2)))
+                         x (lower monad (fail (+ a b)))]
+                        (return "never runned"))
+            res (@trans 5)]
+        (is (= (state/->Pair 6 (fail 3)) res))))))
