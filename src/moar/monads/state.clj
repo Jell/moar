@@ -1,7 +1,7 @@
 (ns moar.monads.state
   (:require [moar.protocols :refer :all]))
 
-(declare monad)
+(declare monad monad-t state-fn)
 
 (defrecord Pair [state result])
 
@@ -30,7 +30,12 @@
   (bind* [self m-val m-fun]
     (state-fn self (fn [state]
                      (let [{ir :result is :state} (m-val state)]
-                       ((m-fun ir) is))))))
+                       ((m-fun ir) is)))))
+  MonadTransformable
+  (transform* [_ inner-monad m-val]
+    (state-fn (monad-t inner-monad)
+              (fn [state]
+                (wrap* inner-monad (m-val state))))))
 
 (def monad
   "monad implementation for the state monad"

@@ -62,4 +62,10 @@
                      c (return 4)]
                     (modify assoc :test "val")
                     (return (+ a b c)))
-              {}))))))
+              {}))))
+
+    (testing "lifting and lowering"
+      (is (= (maybe/just (state/->Pair :state :value))
+             ((return :value) :state)
+             ((lower monad (wrap state/monad :value)) :state)
+             ((lift monad (wrap maybe/monad :value)) :state))))))
