@@ -16,8 +16,7 @@ Quick example:
     (:require [moar.core :refer :all]
               [moar.protocols :refer :all]
               [moar.monads.sequence :as sequence]
-              [moar.monads.maybe :as maybe :refer [just nothing]]
-              [moar.monads.maybe-t :refer [maybe-t]]))
+              [moar.monads.maybe :as maybe :refer [just nothing]]))
 
 (wrap maybe/monad :tobias)
 ;;=> #<Just@74de792d: :tobias>
@@ -48,32 +47,6 @@ Quick example:
        (lift-f maybe/monad inc)
        (lift-f maybe/monad inc)))
 ;;=> #<Just@241c11b4: 3>
-
-;; Also: Monad transformers!
-(let [monad (maybe-t sequence/monad)
-      return (partial wrap monad)]
-  (>>= (return 1)
-       (lift-f monad inc)
-       (lift-f monad
-               (lift-f sequence/monad inc))))
-;;=> #<Transformer@2ec291ff: (#<Just@33053b97: 3>)>
-
-;; Lifting monadic values
-(let [monad (maybe-t sequence/monad)
-      return (partial wrap monad)]
-  (>>= (lift monad (list 1))
-       (lift-f monad inc)))
-;;=> #<Transformer@10bbf34: (#<Just@66bd3ffd: 2>)>
-
-(let [monad (maybe-t sequence/monad)
-      return (partial wrap monad)]
-  ((lift-m monad +) (return 1) (return 2) (return 3)))
-;;=> #<Transformer@4583ce1e: (#<Just@2e21d86c: 6>)>
-
-(let [monad (maybe-t sequence/monad)
-      return (partial wrap monad)]
-  ((lift-m monad list) (return 1) (return 2) (return 3)))
-;;=> #<Transformer@44478429: (#<Just@10f7c67e: 1> #<Just@2bba512: 2> #<Just@2449f0b9: 3>)>
 ```
 
 ## Design Goals

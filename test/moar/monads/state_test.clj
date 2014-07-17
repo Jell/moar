@@ -1,31 +1,55 @@
 (ns moar.monads.state-test
-  (:use [clojure.test]
-        [moar.monads.state])
-  (:require [moar.core :as m]))
+  (:require [clojure.test :refer :all]
+            [moar.monads.state :refer :all]
+            [moar.core :refer :all]
+            [moar.monads.maybe :as maybe]))
 
 (deftest state-monad
-
   (testing "modifying state"
-    (is (= [:test 12]
-           (run-state (m/>>
-                       (mod-state inc)
-                       (mod-state + 5 5)
-                       (state-v :test))
-                      1))))
+    (is (= (->Pair 12 :test)
+           ((>> (modify monad inc)
+                  (modify monad + 5 5)
+                  (wrap monad :test))
+            1))))
 
   (testing "getting and setting state"
-    (is (= [11 11]
-           (run-state (m/>>
-                       (set-state 10)
-                       (mod-state inc)
-                       get-state)
-                      :ingored))))
+    (is (= (->Pair 11 11)
+           ((>> (push monad 10)
+                  (modify monad inc)
+                  (pull monad))
+            :ignored))))
 
   (testing "bindings values"
-    (is (= [7 {:test "val"}]
-           (run-state (m/mlet [a (state-v 1)
-                               b (state-v 2)
-                               c (state-v 4)]
-                              (mod-state assoc :test "val")
-                              (state-v (+ a b c)))
-                      {})))))
+    (is (= (->Pair {:test "val"} 7)
+           ((mlet [a (wrap monad 1)
+                     b (wrap monad 2)
+                     c (wrap monad 4)]
+                    (modify monad assoc :test "val")
+                    (wrap monad (+ a b c)))
+            {})))))
+
+(deftest state-t-monad
+  (let [m (monad-t maybe/monad)]
+
+    (testing "modifying state"
+      (is (= (maybe/just (->Pair 12 :test))
+             ((>> (modify m inc)
+                  (modify m + 5 5)
+                  (wrap m :test))
+              1))))
+
+    (testing "getting and setting state"
+      (is (= (maybe/just (->Pair 11 11))
+             ((>> (push m 10)
+                  (modify m inc)
+                  (pull m))
+              :ignored))))
+
+    (testing "bindings values"
+      (is (= (maybe/just (->Pair {:test "val"} 7))
+             ((mlet [a (wrap m 1)
+                     b (wrap m 2)
+                     c (wrap m 4)]
+                    (modify m assoc :test "val")
+                    (wrap m (+ a b c)))
+              {}))))))

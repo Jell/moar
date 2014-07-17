@@ -3,7 +3,7 @@
 
 (declare id)
 
-(deftype IDMonad []
+(defrecord IDMonad []
   Monad
   (wrap* [_ val] (id val))
   (bind* [_ m-val m-fun]

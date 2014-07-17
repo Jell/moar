@@ -9,7 +9,7 @@
    (when-let [s (seq ss)]
      (concat (first s) (flatten* (rest s))))))
 
-(deftype SequenceMonad []
+(defrecord SequenceMonad []
   Monad
   (wrap* [_ val] (list val))
   (bind* [_ m-val m-fun]

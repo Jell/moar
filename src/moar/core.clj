@@ -149,145 +149,21 @@
        (wrap impl {})
        map))))
 
-(deftype Transformer [t-impl m-val]
-  clojure.lang.IDeref
-  (deref [this] m-val)
-  MonadInstance
-  (monad-implementation [_] t-impl)
-  Object
-  (equals [_ other]
-    (and (instance? Transformer other)
-         (= t-impl (.t-impl other))
-         (= m-val @other))))
-
-(defn transformer [t-impl m-val]
-  (Transformer. t-impl m-val))
-
-(defn base-monad
-  "Returns the base monad for a monad transformer, or the monad itself
-  otherswise"
-  [m-impl]
-  (if (satisfies? MonadTransformer m-impl)
-    (base-monad* m-impl) m-impl))
-
-(defn monads-stack
-  "Returns a stack of monad transformers with the given monads,
-  stacking them from the outside in.
-
-  Example:
-  (= (monads-stack sequence/monad result/monad maybe/monad)
-     (result-t/monad (maybe-t sequence/monad)))"
-  [outer-monad & inner-monads]
-  {:pre [(satisfies? Monad outer-monad)
-         (every? (partial satisfies? MonadTransformable)
-                 inner-monads)]}
-  (reduce (fn [impl next-impl]
-            (transformer-impl next-impl impl))
-          outer-monad
-          inner-monads))
-
-(defn monad-transformers-chain
-  [m-impl]
-  {:pre [(satisfies? Monad m-impl)]}
-  (if (satisfies? MonadTransformer m-impl)
-    (conj (monad-transformers-chain (wrapper-impl m-impl))
-          m-impl)
-    [m-impl]))
-
-(defn intermediate-monads
-  "Returns all the monads between a higher monad m-impl-a and a lower
-  one m-impl-b"
-  [m-impl-a m-impl-b]
-  {:pre [(satisfies? Monad m-impl-a)
-         (satisfies? Monad m-impl-b)]}
-  (let [below (drop-while (partial not= m-impl-b)
-                          (monad-transformers-chain m-impl-a))]
-    (if (seq below)
-      (drop 1 below)
-      (throw (Exception. (str m-impl-b " is not a sub-monad of " m-impl-a))))))
+(defn inner-monad [m-impl]
+  (inner-monad* m-impl))
 
 (defn lift
   "Lifts a monadic value whose monad is a wrapper of m-impl to a monadic
   value of m-impl"
-  [m-impl val]
-  {:pre [(satisfies? Monad m-impl)]}
-  (if (satisfies? MonadInstance val)
-    (reduce
-     (fn [m-val m-next]
-       (transformer
-        m-next
-        (fmap (partial wrap (base-monad* m-next)) m-val)))
-     val
-     (intermediate-monads m-impl (monad-implementation val)))
-    (wrap m-impl val)))
-
-(defn lift-f
-  "Turns a pure function or a monadic function whose monad is a wrapper
-  of m-impl into a higher monadic function whose monad is m-impl"
-  [m-impl fun]
-  {:pre [(satisfies? Monad m-impl)]}
-  (fn [& args]
-    (lift m-impl (apply fun args))))
-
-(defn lift-m
-  "Turns a pure function or a monadic function whose monad is a wrapper
-  of m-impl into a higher monad function in m-impl"
-  [m-impl fun]
-  (fn [& args]
-    ((fn inner-fun [vals [m-val & m-vals]]
-       (if m-val
-         (bind m-val #(inner-fun (conj vals %) m-vals))
-         (apply (lift-f m-impl fun) vals)))
-     [] args)))
-
-(defn lower
-  "Pushes m-val into the monad m-impl"
   [m-impl m-val]
-  (if (instance? Transformer m-val)
-    (transformer (.t-impl m-val) (lower m-impl @m-val))
-    (transformer (transformer-impl (monad-implementation m-val)
-                                   m-impl)
-                 (wrap (base-monad m-impl)
-                       m-val))))
+  {:pre [(satisfies? MonadTransformer m-impl)
+         (monad-instance? (inner-monad m-impl) m-val)]
+   :post [(partial monad-instance? m-impl)]}
+  (lift* m-impl m-val))
 
-(defn morph-nth [n m-impl m-val]
-  {:pre [(>= n 0)
-         (satisfies? MonadTransformer m-impl)
-         (satisfies? MonadInstance m-val)
-         (not (satisfies? MonadTransformer m-val))]}
-  (let [monad-chain-a (monad-transformers-chain m-impl)
-        m-impl-b (monad-implementation m-val)
-        [below m above] (split-with-nth-from-last
-                         n
-                         #(= m-impl-b (base-monad %))
-                         monad-chain-a)]
-    (if m
-      (let [lowered (reduce (fn [m-val-sub m-impl-sub]
-                              (lower m-impl-sub m-val-sub))
-                            m-val
-                            (reverse below))]
-        (if (seq above)
-          (lift (last above) lowered)
-          lowered))
-      (throw
-       (Exception.
-        (str "the "
-             (class m-impl-b)
-             " monad is not present"
-             (if (> n 0) (str " at index " n))
-             " in the monad chain of m-impl"))))))
-
-(defn morph
-  "Transforms a monadic value m-val whose monad is anywhere in the monad
-  transformers chain of m-impl into a monadic value of m-impl"
-  [m-impl m-val]
-  (morph-nth 0 m-impl m-val))
-
-(defn morph-f
-  "Turns a pure function or a monadic function returning a monadic value
-  whose monad is anywhere in the monad transformer chain of m-impl to a
-  higher monadic function whose monad is m-impl"
-  [m-impl fun]
-  {:pre [(satisfies? Monad m-impl)]}
-  (fn [& args]
-    (morph m-impl (apply fun args))))
+(defn lower [m-impl m-val]
+  {:pre [(satisfies? MonadInstance m-val)
+         (satisfies? MonadTransformable
+                     (monad-implementation m-val))]
+   :post [(partial monad-instance? m-impl)]}
+  (transform* (monad-implementation m-val) (inner-monad m-impl) m-val))

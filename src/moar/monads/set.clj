@@ -2,7 +2,7 @@
   (:require [clojure.set]
             [moar.protocols :refer :all]))
 
-(deftype SetMonad []
+(defrecord SetMonad []
   Monad
   (wrap* [_ val] #{val})
   (bind* [_ m-val m-fun]

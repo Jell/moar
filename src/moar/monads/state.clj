@@ -1,55 +1,87 @@
 (ns moar.monads.state
   (:require [moar.protocols :refer :all]))
 
-(declare state-v make-state)
+(declare monad)
 
-(defprotocol State
-  (run-state [this init-state]
-    "given a initial state returns a pair where the first value is the
-     modified state and the second value is the value produced by
-     running the operation"))
+(defrecord Pair [state result])
 
-(deftype StateMonad []
+(deftype StateFn [m-impl fun]
+  MonadInstance
+  (monad-implementation [_] m-impl)
+  clojure.lang.IFn
+  (invoke [this state] (fun state)))
+
+(defn state-fn [m-impl fun]
+  (StateFn. m-impl fun))
+
+(defprotocol MonadState
+  (pull* [impl])
+  (push* [impl value]))
+
+(defrecord StateMonadImpl []
+  MonadState
+  (pull* [self]
+    (state-fn self (fn [state] (->Pair state state))))
+  (push* [self x]
+    (state-fn self (fn [state] (->Pair x nil))))
   Monad
-  (wrap* [_ val] (state-v val))
-  (bind* [_ m-val m-fun]
-    (make-state
-     (fn [state]
-       (let [[value state] (run-state m-val state)]
-         (run-state (m-fun value) state))))))
+  (wrap* [self val]
+    (state-fn self (fn [state] (->Pair state val))))
+  (bind* [self m-val m-fun]
+    (state-fn self (fn [state]
+                     (let [{ir :result is :state} (m-val state)]
+                       ((m-fun ir) is))))))
 
 (def monad
   "monad implementation for the state monad"
-  (StateMonad.))
+  (StateMonadImpl.))
 
-(deftype StateFunction [fun]
-  State
-  (run-state [_ init-state] (fun init-state))
-  MonadInstance
-  (monad-implementation [_] monad))
+(defn pull
+  ([impl] (pull* impl))
+  ([impl fun]
+     (bind* impl
+            (pull* impl)
+            (fn [result]
+              (wrap* impl (fun result))))))
 
-(defn make-state
-  "constructs a instance of state function given a function"
-  [fun]
-  (StateFunction. fun))
+(defn push [impl val] (push* impl val))
 
-(defn state-v
-  "returns a state function that leaves the state unchanged and uses the
-  given value as its value"
-  [value]
-  (make-state (fn [state] [value state])))
+(defn modify [impl fun & extra-args]
+  (bind* impl
+         (pull* impl)
+         (fn [result]
+           (push* impl
+                  (apply fun (concat [result] extra-args))))))
 
-(defn mod-state
-  "takes a function of the state and returns a state function of the
-  value nil"
-  [fun & args]
-  (make-state (fn [state] [nil (apply fun state args)])))
+(defrecord StateTransformerImpl [inner-monad]
+  Monad
+  (wrap* [self val]
+    (state-fn self (fn [state]
+                     (wrap* inner-monad (->Pair state val)))))
+  (bind* [self m-val m-fun]
+    (state-fn self (fn [state]
+                     (bind* inner-monad
+                            (m-val state)
+                            (fn [{ir :result, is :state}]
+                              ((m-fun ir) is))))))
 
-(def get-state
-  "reads the state into the value"
-  (make-state (fn [state] [state state])))
+  MonadState
+  (pull* [self]
+    (state-fn self (fn [state]
+                     (wrap* inner-monad (->Pair state state)))))
+  (push* [self x]
+    (state-fn self (fn [state]
+                     (wrap* inner-monad (->Pair x nil)))))
 
-(defn set-state
-  "change the state to the given value"
-  [new-state]
-  (make-state (fn [state] [nil new-state])))
+  MonadTransformer
+  (inner-monad* [_] inner-monad)
+  (lift* [self m-val]
+    (state-fn self
+              (fn [state]
+                (bind* inner-monad
+                       m-val
+                       (fn [x]
+                         (wrap* inner-monad (->Pair state x))))))))
+
+(defn monad-t [inner-monad]
+  (StateTransformerImpl. inner-monad))

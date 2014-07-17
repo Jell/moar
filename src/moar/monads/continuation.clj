@@ -7,7 +7,7 @@
   (call-continuation [continuation callback]
     "invoke the continuation with a given callback"))
 
-(deftype ContinuationMonad []
+(defrecord ContinuationMonad []
   Monad
   (wrap* [_ val] (continue-with val))
   (bind* [_ m-val m-fun]
