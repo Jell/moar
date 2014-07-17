@@ -2,50 +2,60 @@
   (:require [clojure.test :refer :all]
             [moar.core :refer :all]
             [moar.monads.sequence :as sequence]
-            [moar.monads.maybe :as maybe :refer [monad just nothing monad-t]]))
+            [moar.monads.maybe :as maybe :refer [just nothing]]))
 
 (deftest monadic-laws
-  (testing "left identity"
-    (are [f a]
-      (= (bind (wrap monad a) f) (f a))
-      (fn [x] (just x))       'hi
-      (fn [x] (just (* 2 x))) 3
-      (fn [_] nothing)        :hello))
-  (testing "right identity"
-    (are [m]
-      (= (bind m (partial wrap monad)) m)
-      (just 'hi)
-      (just 5)
-      (just nil)
-      nothing))
-  (testing "associativity"
-    (are [m f g]
-      (= (bind (bind m f) g)
-         (bind m (fn [x] (bind (f x) g))))
-      (just 5) #(just (inc %))  #(just (* 2 %))
-      nothing  #(just (inc %))  #(just (* 2 %))
-      (just 5) (fn [_] nothing) #(just (* 2 %))
-      (just 5) #(just (* 2 %))  (fn [_] nothing)
-      (just 5) (fn [_] nothing) (fn [_] nothing)
-      nothing  (fn [_] nothing) (fn [_] nothing))))
+  (let [monad maybe/monad
+        return (partial wrap monad)]
+
+    (testing "left identity"
+      (are [f a]
+        (= (bind (return a) f) (f a))
+        (fn [x] (just x))       'hi
+        (fn [x] (just (* 2 x))) 3
+        (fn [_] nothing)        :hello))
+
+    (testing "right identity"
+      (are [m]
+        (= (bind m return) m)
+        (just 'hi)
+        (just 5)
+        (just nil)
+        nothing))
+
+    (testing "associativity"
+      (are [m f g]
+        (= (bind (bind m f) g)
+           (bind m (fn [x] (bind (f x) g))))
+        (just 5) #(just (inc %))  #(just (* 2 %))
+        nothing  #(just (inc %))  #(just (* 2 %))
+        (just 5) (fn [_] nothing) #(just (* 2 %))
+        (just 5) #(just (* 2 %))  (fn [_] nothing)
+        (just 5) (fn [_] nothing) (fn [_] nothing)
+        nothing  (fn [_] nothing) (fn [_] nothing)))))
 
 (deftest maybe-transformer-tests
-  (let [monad-t (maybe/monad-t sequence/monad)]
+  (let [monad (-> sequence/monad maybe/monad-t)
+        return (partial wrap monad)]
+
     (is (= (list (just 1))
-           @(wrap monad-t 1)))
+           @(return 1)))
+
     (is (= (list (just 2))
-           @(bind (wrap monad-t 1)
-                  (fn [x] (wrap monad-t (inc x))))))
+           @(bind (return 1) (comp return inc))))
+
     (is (= (list (just 3))
-           @(>>= (wrap monad-t 1)
-                 (fn [x] (wrap monad-t (inc x)))
-                 (fn [x] (wrap monad-t (inc x))))))
+           @(>>= (return 1)
+                 (comp return inc)
+                 (comp return inc))))
+
     (is (= (list (just 4) (just 5) nothing (just 6))
-           @(bind (maybe/t monad-t
+           @(bind (maybe/t monad
                            (list (just 3)
                                  (just 4)
                                  nothing
                                  (just 5)))
-                  (fn [x] (wrap monad-t (inc x))))))
+                  (comp return inc))))
+
     (is (= (list (just 2))
-           @(fmap inc (wrap monad-t 1))))))
+           @(fmap inc (return 1))))))
