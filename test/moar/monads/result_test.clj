@@ -39,7 +39,7 @@
     (testing "can lift state side effects into result monad"
       (let [trans (mlet [a (return 1)
                          b (lift monad (>> (state/modify state/monad inc)
-                                                  (wrap state/monad 2)))
+                                           (wrap state/monad 2)))
                          x (lower monad (fail (+ a b)))]
                         (return "never runned"))
             res (@trans 5)]
