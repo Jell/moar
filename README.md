@@ -16,6 +16,8 @@ Quick example:
     (:require [moar.core :refer :all]
               [moar.protocols :refer :all]
               [moar.monads.sequence :as sequence]
+              [moar.monads.continuation :as continuation]
+              [moar.monads.state :as state]
               [moar.monads.maybe :as maybe :refer [just nothing]]))
 
 (wrap maybe/monad :tobias)
@@ -42,11 +44,31 @@ Quick example:
 (= (just 2) (just 3))
 ;;=> false
 
-(let [return (partial wrap maybe/monad)]
-  (>>= (return 1)
-       (lift-f maybe/monad inc)
-       (lift-f maybe/monad inc)))
-;;=> #<Just@241c11b4: 3>
+;; Monad transformers!
+
+;; Continuation + State!
+(let [monad   (continuation/monad-t state/monad)
+      run     continuation/run
+      return  (partial wrap monad)
+      callcc  (partial continuation/callcc monad)
+      modify  (comp (partial lift monad)
+                    (partial state/modify state/monad))
+      pull    (comp (partial lift monad)
+                    (partial state/pull state/monad))
+
+      my-loop (>> (callcc (fn [cont]
+                           (modify assoc :next
+                                   (partial cont nil))))
+                 (modify update-in [:count] inc)
+                 (mlet [n    (pull :count)
+                        next (pull :next)]
+                       (modify update-in [:log] conj n)
+                       (if (< n 5)
+                         (next)
+                         (>> (modify dissoc :next)
+                             (return :done)))))]
+  ((run my-loop) {:count 0 :log []}))
+;;=> #moar.monads.state.Pair{:state {:count 5, :log [1 2 3 4 5]}, :result :done}
 ```
 
 ## Design Goals
