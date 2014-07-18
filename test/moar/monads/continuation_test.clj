@@ -1,6 +1,8 @@
 (ns moar.monads.continuation-test
   (:require [clojure.test :refer :all]
             [moar.monads.continuation :as continuation]
+            [moar.monads.maybe :as maybe]
+            [moar.monads.state :as state]
             [moar.core :refer :all]))
 
 (deftest continuation-tests
@@ -22,3 +24,28 @@
               (x (fn [_] (return ::val))))
              identity)]
         (is (= result ::val))))))
+
+(deftest continuation-transformer
+  (let [m (continuation/monad-t state/monad)
+        callcc (partial continuation/callcc m)
+        modify (comp (partial lift m)
+                     (partial state/modify state/monad))
+        pull   (comp (partial lift m)
+                     (partial state/pull state/monad))]
+
+    (testing "stateful loops!"
+      (let [my-loop
+            (>> (callcc (fn [cont]
+                          (modify assoc :next
+                                  (partial cont nil))))
+                (modify update-in [:count] inc)
+                (mlet [n    (pull :count)
+                       next (pull :next)]
+                      (modify update-in [:log] conj n)
+                      (if (< n 5)
+                        (next)
+                        (modify dissoc :next))))]
+
+        (is (= (state/->Pair {:count 5 :log [1 2 3 4 5]} nil)
+               ((my-loop (partial wrap state/monad))
+                {:count 0 :log []})))))))

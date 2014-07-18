@@ -36,3 +36,38 @@
           ((m-fun val) callback)))))))
 
 (def monad (ContinuationMonad.))
+
+(defrecord ContinuationTransformer [inner-monad]
+  MonadContinuation
+  (callcc [self fun]
+    (continuation-fn self
+                     (fn [callback]
+                       ((fun (fn [value]
+                               (continuation-fn
+                                self
+                                (fn [_callback]
+                                  (callback value)))))
+                        callback))))
+  MonadTransformer
+  (inner-monad* [_] inner-monad)
+  (lift* [self m-val]
+    (continuation-fn
+     self
+     (fn [callback]
+       (bind* inner-monad
+              m-val
+              (fn [val]
+                (callback val))))))
+  Monad
+  (wrap* [self val]
+    (continuation-fn self (fn [callback] (callback val))))
+  (bind* [self m-val m-fun]
+    (continuation-fn
+     self
+     (fn [callback]
+       (m-val
+        (fn [val]
+          ((m-fun val) callback)))))))
+
+(defn monad-t [inner-monad]
+  (ContinuationTransformer. inner-monad))
