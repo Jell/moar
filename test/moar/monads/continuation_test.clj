@@ -26,11 +26,12 @@
         (is (= result ::val))))))
 
 (deftest continuation-transformer
-  (let [m (continuation/monad-t state/monad)
-        callcc (partial continuation/callcc m)
-        modify (comp (partial lift m)
+  (let [monad  (continuation/monad-t state/monad)
+        return (partial wrap monad)
+        callcc (partial continuation/callcc monad)
+        modify (comp (partial lift monad)
                      (partial state/modify state/monad))
-        pull   (comp (partial lift m)
+        pull   (comp (partial lift monad)
                      (partial state/pull state/monad))]
 
     (testing "stateful loops!"
@@ -44,8 +45,9 @@
                       (modify update-in [:log] conj n)
                       (if (< n 5)
                         (next)
-                        (modify dissoc :next))))]
+                        (>> (modify dissoc :next)
+                            (return ::done)))))]
 
-        (is (= (state/->Pair {:count 5 :log [1 2 3 4 5]} nil)
+        (is (= (state/->Pair {:count 5 :log [1 2 3 4 5]} ::done)
                ((my-loop (partial wrap state/monad))
                 {:count 0 :log []})))))))
