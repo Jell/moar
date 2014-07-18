@@ -7,6 +7,7 @@
 
 (deftest continuation-tests
   (let [monad continuation/monad
+        run   continuation/run
         return (partial wrap monad)
         callcc (partial continuation/callcc monad)]
 
@@ -15,18 +16,17 @@
                [a (return 1)
                 b (return 2)]
                (return (+ a b)))]
-        (is (= 3 (c identity)))))
+        (is (= 3 (run c)))))
 
     (testing "can use callcc"
       (let [result
-            ((mlet
-              [x (callcc (fn [cont] (return cont)))]
-              (x (fn [_] (return ::val))))
-             identity)]
+            (run (mlet [x (callcc (fn [cont] (return cont)))]
+                       (x (fn [_] (return ::val)))))]
         (is (= result ::val))))))
 
 (deftest continuation-transformer
   (let [monad  (continuation/monad-t state/monad)
+        run    continuation/run
         return (partial wrap monad)
         callcc (partial continuation/callcc monad)
         modify (comp (partial lift monad)
@@ -49,5 +49,4 @@
                             (return ::done)))))]
 
         (is (= (state/->Pair {:count 5 :log [1 2 3 4 5]} ::done)
-               ((my-loop (partial wrap state/monad))
-                {:count 0 :log []})))))))
+               ((run my-loop) {:count 0 :log []})))))))
