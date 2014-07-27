@@ -2,14 +2,14 @@
   (:require [moar.protocols :refer :all]
             [moar.core :refer :all]))
 
-(declare t monad-t result fail)
+(declare t monad-t success fail)
 
 (defprotocol Result
   (success? [this]))
 
-(defrecord ResultMonadImpl []
+(defrecord ResultMonad []
   Monad
-  (wrap* [_ val] (result val))
+  (wrap* [_ val] (success val))
   (bind* [_ m-val m-fun]
     (if (success? m-val)
       (m-fun @m-val)
@@ -19,7 +19,7 @@
     (t (monad-t inner-monad)
        (wrap* inner-monad m-val))))
 
-(def monad (ResultMonadImpl.))
+(def monad (ResultMonad.))
 
 (deftype Success [value]
   clojure.lang.IDeref
@@ -33,7 +33,7 @@
     (and (instance? Success other)
          (= value @other))))
 
-(defn result [value] (Success. value))
+(defn success [value] (Success. value))
 
 (deftype Fail [value]
   clojure.lang.IDeref
@@ -64,13 +64,13 @@
 (defn t [m-impl m-val]
   (T. m-impl m-val))
 
-(defrecord ResultTransformerImpl [inner-monad]
+(defrecord ResultTransformer [inner-monad]
   MonadTransformer
   (inner-monad* [_] inner-monad)
-  (lift* [self m-val] (t self (fmap result m-val)))
+  (lift* [self m-val] (t self (fmap success m-val)))
   Monad
   (wrap* [self value]
-    (t self (wrap* inner-monad (result value))))
+    (t self (wrap* inner-monad (success value))))
   (bind* [self m-val m-fun]
     (t self
        (bind* inner-monad
@@ -81,4 +81,4 @@
                   (wrap* inner-monad result-value)))))))
 
 (defn monad-t [m-impl]
-  (ResultTransformerImpl. m-impl))
+  (ResultTransformer. m-impl))

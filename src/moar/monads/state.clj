@@ -18,7 +18,7 @@
   (pull* [impl])
   (push* [impl value]))
 
-(defrecord StateMonadImpl []
+(defrecord StateMonad []
   MonadState
   (pull* [self]
     (state-fn self (fn [state] (->Pair state state))))
@@ -39,7 +39,7 @@
 
 (def monad
   "monad implementation for the state monad"
-  (StateMonadImpl.))
+  (StateMonad.))
 
 (defn pull
   ([impl] (pull* impl))
@@ -58,7 +58,7 @@
            (push* impl
                   (apply fun (concat [result] extra-args))))))
 
-(defrecord StateTransformerImpl [inner-monad]
+(defrecord StateTransformer [inner-monad]
   Monad
   (wrap* [self val]
     (state-fn self (fn [state]
@@ -89,4 +89,4 @@
                          (wrap* inner-monad (->Pair state x))))))))
 
 (defn monad-t [inner-monad]
-  (StateTransformerImpl. inner-monad))
+  (StateTransformer. inner-monad))

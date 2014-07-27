@@ -64,7 +64,7 @@
 (defn t [m-impl m-val]
   (T. m-impl m-val))
 
-(defrecord MaybeTransformerImpl [inner-monad]
+(defrecord MaybeTransformer [inner-monad]
   Monad
   (wrap* [self value]
     (t self (wrap inner-monad (just value))))
@@ -81,4 +81,4 @@
     (t self (fmap just m-val))))
 
 (defn monad-t [inner-monad]
-  (MaybeTransformerImpl. inner-monad))
+  (MaybeTransformer. inner-monad))
