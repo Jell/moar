@@ -69,6 +69,7 @@
   (bind* [self m-val m-fun]
     (bind-default self m-val m-fun))
   MonadTransformer
+  (base-monad* [_] monad)
   (inner-monad* [_] inner-monad)
   (lift* [self m-val]
     (continuation-fn

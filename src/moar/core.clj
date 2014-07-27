@@ -19,6 +19,17 @@
    (= (monad-implementation m-val-a)
       (monad-implementation m-val-b))))
 
+(defn base-monad
+  "Returns the base monad for a monad transformer, or the monad itself
+  otherswise"
+  [m-impl]
+  (if (satisfies? MonadTransformer m-impl)
+    (base-monad* m-impl) m-impl))
+
+(defn same-base-monad? [m-impl-a m-impl-b]
+  (= (base-monad m-impl-a)
+     (base-monad m-impl-b)))
+
 (defn wrap
   "Wraps a value in a monad"
   [m-impl val]
@@ -161,9 +172,70 @@
    :post [(partial monad-instance? m-impl)]}
   (lift* m-impl m-val))
 
+(defn chain-lift [m-impls m-val]
+  (reduce (fn [m-val-sub m-impl]
+            (lift m-impl m-val-sub))
+          m-val m-impls))
+
+(defn transform
+  ([inner-monad m-val]
+     {:pre [(satisfies? Monad inner-monad)
+            (satisfies? MonadInstance m-val)]}
+     (transform (monad-implementation m-val)
+                inner-monad
+                m-val))
+  ([outer-monad inner-monad m-val]
+     {:pre [(satisfies? MonadTransformable outer-monad)
+            (satisfies? Monad inner-monad)
+            (satisfies? MonadInstance m-val)]}
+     (transform* outer-monad inner-monad m-val)))
+
 (defn lower [m-impl m-val]
   {:pre [(satisfies? MonadInstance m-val)
          (satisfies? MonadTransformable
-                     (monad-implementation m-val))]
+                     (monad-implementation m-val))
+         (satisfies? MonadTransformer m-impl)]
    :post [(partial monad-instance? m-impl)]}
-  (transform* (monad-implementation m-val) (inner-monad m-impl) m-val))
+  (transform* (monad-implementation m-val)
+              (inner-monad m-impl)
+              m-val))
+
+(defn monad-transformers-chain
+  [m-impl]
+  {:pre [(satisfies? Monad m-impl)]}
+  (if (satisfies? MonadTransformer m-impl)
+    (conj (monad-transformers-chain (inner-monad m-impl))
+          m-impl)
+    [m-impl]))
+
+(defn morph-nth
+  ([n m-impl m-val]
+     (morph-nth n m-impl (monad-implementation m-val) m-val))
+  ([n m-impl-a m-impl-b m-val]
+     {:pre [(>= n 0)
+            (satisfies? MonadTransformer m-impl-a)
+            (satisfies? Monad m-impl-b)]
+      :post [(monad-instance? m-impl-a %)]}
+     (let [{:keys [before found after]}
+           (split-with-nth-coll
+            n
+            (monad-transformers-chain m-impl-b)
+            (monad-transformers-chain m-impl-a)
+            :compare-with same-base-monad?)]
+       (if found
+         (cond->> m-val
+                  (seq before) (transform (last before))
+                  (seq after) (chain-lift after))
+         (throw
+          (Exception.
+           (str "the "
+                (class m-impl-b)
+                " monad is not present"
+                (if (> n 0) (str " at index " n))
+                " in the monad chain of m-impl")))))))
+
+(defn morph
+  "Transforms a monadic value m-val whose monad is anywhere in the monad
+  transformers chain of m-impl into a monadic value of m-impl"
+  [m-impl m-val]
+  (morph-nth 0 m-impl m-val))

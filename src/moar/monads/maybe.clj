@@ -76,9 +76,16 @@
                        @(m-fun @maybe-value)
                        (wrap inner-monad nothing))))))
   MonadTransformer
+  (base-monad* [_] monad)
   (inner-monad* [_] inner-monad)
   (lift* [self m-val]
-    (t self (fmap just m-val))))
+    (t self (fmap just m-val)))
+  MonadTransformable
+  (transform* [self nested-inner-monad m-val]
+    (let [inner-transformed
+          (transform* inner-monad nested-inner-monad @m-val)]
+      (t (monad-t (monad-implementation inner-transformed))
+         inner-transformed))))
 
 (defn monad-t [inner-monad]
   (MaybeTransformer. inner-monad))

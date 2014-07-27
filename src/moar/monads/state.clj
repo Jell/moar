@@ -79,6 +79,7 @@
                      (wrap* inner-monad (->Pair x nil)))))
 
   MonadTransformer
+  (base-monad* [_] monad)
   (inner-monad* [_] inner-monad)
   (lift* [self m-val]
     (state-fn self

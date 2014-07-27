@@ -66,6 +66,7 @@
 
 (defrecord ResultTransformer [inner-monad]
   MonadTransformer
+  (base-monad* [_] monad)
   (inner-monad* [_] inner-monad)
   (lift* [self m-val] (t self (fmap success m-val)))
   Monad
@@ -78,7 +79,13 @@
               (fn [result-value]
                 (if (success? result-value)
                   @(m-fun @result-value)
-                  (wrap* inner-monad result-value)))))))
+                  (wrap* inner-monad result-value))))))
+  MonadTransformable
+  (transform* [self nested-inner-monad m-val]
+    (let [inner-transformed
+          (transform* inner-monad nested-inner-monad @m-val)]
+      (t (monad-t (monad-implementation inner-transformed))
+         inner-transformed))))
 
 (defn monad-t [m-impl]
   (ResultTransformer. m-impl))

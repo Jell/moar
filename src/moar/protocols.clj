@@ -17,5 +17,6 @@
   (transform* [self inner-monad m-val]))
 
 (defprotocol MonadTransformer
+  (base-monad* [self])
   (inner-monad* [self])
   (lift* [self m-val]))
