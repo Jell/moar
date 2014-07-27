@@ -1,6 +1,7 @@
 (ns moar.monads.state-test
   (:require [clojure.test :refer :all]
             [moar.monads.state :as state]
+            [moar.monads.result :as result]
             [moar.core :refer :all]
             [moar.monads.maybe :as maybe]))
 
@@ -69,3 +70,27 @@
              ((return :value) :state)
              ((lower monad (wrap state/monad :value)) :state)
              ((lift monad (wrap maybe/monad :value)) :state))))))
+
+(deftest nested-state-transformer-test
+  (let [monad (-> result/monad
+                  state/monad-t
+                  state/monad-t)
+        return (partial wrap monad)
+        pull   (partial state/pull state/monad)
+        modify (partial state/modify state/monad)
+
+        pull-a   (comp (partial morph-nth 0 monad) pull)
+        modify-a (comp (partial morph-nth 0 monad) modify)
+        pull-b   (comp (partial morph-nth 1 monad) pull)
+        modify-b (comp (partial morph-nth 1 monad) modify)]
+
+    (is (= (result/success
+            (state/->Pair {:x 3}
+                          (state/->Pair {:y 2} 5)))
+           (((>> (modify-a update-in [:x] inc)
+                 (modify-b update-in [:y] inc)
+                 (mlet [a (pull-a :x)
+                        b (pull-b :y)]
+                       (return (+ a b))))
+             {:y 1})
+            {:x 2})))))
