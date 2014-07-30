@@ -1,5 +1,6 @@
 (ns moar.monads.state
-  (:require [moar.protocols :refer :all]))
+  (:require [moar.protocols :refer :all]
+            [moar.infer :refer [infer]]))
 
 (declare monad monad-t state-fn)
 
@@ -10,6 +11,8 @@
   (monad-implementation [_] m-impl)
   clojure.lang.IFn
   (invoke [this state] (fun state)))
+(infer StateFn Functor)
+(infer StateFn Applicative)
 
 (defn state-fn [m-impl fun]
   (StateFn. m-impl fun))

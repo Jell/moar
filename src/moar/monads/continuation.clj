@@ -1,11 +1,14 @@
 (ns moar.monads.continuation
-  (:require [moar.protocols :refer :all]))
+  (:require [moar.protocols :refer :all]
+            [moar.infer :refer [infer]]))
 
 (deftype ContinuationFn [m-impl fun]
   MonadInstance
   (monad-implementation [_] m-impl)
   clojure.lang.IFn
   (invoke [_ callback] (fun callback)))
+(infer ContinuationFn Functor)
+(infer ContinuationFn Applicative)
 
 (defn continuation-fn [m-impl fun]
   (ContinuationFn. m-impl fun))

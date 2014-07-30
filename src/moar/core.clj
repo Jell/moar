@@ -1,7 +1,6 @@
 (ns moar.core
   (:require [moar.utils :refer :all]
-            [moar.protocols :refer :all]
-            [moar.monads.id :refer [id]]))
+            [moar.protocols :refer :all]))
 
 (defn monad-instance?
   "Checks whether monads have the given implementation"
@@ -98,10 +97,28 @@
   Example:
   (= (just 2) (fmap inc (just 1)))"
   [fun m-val]
-  {:pre [(satisfies? MonadInstance m-val)]}
-  (mlet
-   [value m-val]
-   (wrap (monad-implementation m-val) (fun value))))
+  (fmap* m-val fun))
+
+(defn pure [f-val val]
+  (pure* f-val val))
+
+(defn fapply [f-fun & f-vals]
+  (fapply* f-fun f-vals))
+
+(defn mapply
+  ([m-fun m-vals]
+     (mapply (monad-implementation m-fun) m-fun m-vals))
+  ([m-impl m-fun m-vals]
+     (bind m-impl
+           m-fun
+           (fn [fun]
+             ((fn inner-fun [m-vals vals]
+                (if (seq m-vals)
+                  (bind m-impl (first m-vals)
+                        (fn [val] (inner-fun (rest m-vals)
+                                             (conj vals val))))
+                  (wrap m-impl (apply fun vals))))
+              m-vals [])))))
 
 (defn m-sequence
   "given a collection of monadic values it returns a monadic value where

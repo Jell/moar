@@ -1,5 +1,6 @@
 (ns moar.monads.set
   (:require [clojure.set]
+            [moar.infer :refer [infer]]
             [moar.protocols :refer :all]))
 
 (defrecord SetMonad []
@@ -17,3 +18,6 @@
 (extend-protocol MonadInstance
   clojure.lang.IPersistentSet
   (monad-implementation [_] monad))
+(derive clojure.lang.IPersistentSet :moar.infer/monad-instance)
+(infer clojure.lang.IPersistentSet Functor)
+(infer clojure.lang.IPersistentSet Applicative)

@@ -1,5 +1,6 @@
 (ns moar.monads.maybe
   (:require [moar.protocols :refer :all]
+            [moar.infer :refer [infer]]
             [moar.core :refer :all]))
 
 (declare t monad-t just nothing maybe-or)
@@ -19,6 +20,7 @@
     (t (monad-t inner-monad)
        (wrap inner-monad m-val))))
 
+
 (def monad (MaybeMonad.))
 
 (deftype Just [value]
@@ -26,20 +28,26 @@
   (deref [this] value)
   Maybe
   (just? [_] true)
+  Functor
+  (fmap* [_ fun] (just (fun value)))
   MonadInstance
   (monad-implementation [_] monad)
   Object
   (equals [_ other]
     (and (instance? Just other)
          (= value @other))))
+(infer Just Applicative)
 
 (defn just [value] (Just. value))
 
 (deftype Nothing []
   Maybe
   (just? [_] false)
+  Functor
+  (fmap* [self _] self)
   MonadInstance
   (monad-implementation [_] monad))
+(infer Nothing Applicative)
 
 (def nothing (Nothing.))
 
@@ -60,6 +68,8 @@
     (and (instance? T other)
          (= m-val @other)
          (= m-impl (.m-impl other)))))
+(infer T Functor)
+(infer T Applicative)
 
 (defn t [m-impl m-val]
   (T. m-impl m-val))

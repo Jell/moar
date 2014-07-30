@@ -1,5 +1,6 @@
 (ns moar.monads.result
   (:require [moar.protocols :refer :all]
+            [moar.infer :refer [infer]]
             [moar.core :refer :all]))
 
 (declare t monad-t success fail)
@@ -26,12 +27,15 @@
   (deref [this] value)
   Result
   (success? [_] true)
+  Functor
+  (fmap* [self fun] (success (fun value)))
   MonadInstance
   (monad-implementation [_] monad)
   Object
   (equals [_ other]
     (and (instance? Success other)
          (= value @other))))
+(infer Success Applicative)
 
 (defn success [value] (Success. value))
 
@@ -40,12 +44,15 @@
   (deref [this] value)
   Result
   (success? [_] false)
+  Functor
+  (fmap* [self _] self)
   MonadInstance
   (monad-implementation [_] monad)
   Object
   (equals [_ other]
     (and (instance? Fail other)
          (= value @other))))
+(infer Fail Applicative)
 
 (defn fail [value]
   (Fail. value))
@@ -60,6 +67,8 @@
     (and (instance? T other)
          (= m-val @other)
          (= m-impl (.m-impl other)))))
+(infer T Functor)
+(infer T Applicative)
 
 (defn t [m-impl m-val]
   (T. m-impl m-val))

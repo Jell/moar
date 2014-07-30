@@ -1,5 +1,7 @@
 (ns moar.monads.sequence
-  (:require [moar.protocols :refer :all]))
+  (:require [moar.protocols :refer :all]
+            [moar.core :refer :all]
+            [moar.infer :refer [infer]]))
 
 (defn- flatten*
   "Like #(apply concat %), but fully lazy: it evaluates each sublist
@@ -21,8 +23,18 @@
 
 (def monad (SequenceMonad.))
 
-(extend-protocol MonadInstance
-  clojure.lang.LazySeq
-  (monad-implementation [_] monad)
-  clojure.lang.IPersistentList
-  (monad-implementation [_] monad))
+(extend clojure.lang.LazySeq
+  Functor
+  {:fmap* (fn [self fun] (map fun self))}
+  MonadInstance
+  {:monad-implementation (fn [_] monad)})
+(derive clojure.lang.LazySeq :moar.infer/monad-instance)
+(infer clojure.lang.LazySeq Applicative)
+
+(extend clojure.lang.IPersistentList
+  Functor
+  {:fmap* (fn [self fun] (map fun self))}
+  MonadInstance
+  {:monad-implementation (fn [_] monad)})
+(derive clojure.lang.IPersistentList :moar.infer/monad-instance)
+(infer clojure.lang.IPersistentList Applicative)

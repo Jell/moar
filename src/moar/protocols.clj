@@ -5,6 +5,13 @@
   (monad-implementation [t]
     "Returns the implementation of the underlying monad"))
 
+(defprotocol Functor
+  (fmap* [m-val fun]))
+
+(defprotocol Applicative
+  (pure* [f-val val])
+  (fapply* [f-fun f-vals]))
+
 (defprotocol Monad
   (wrap* [impl val])
   (bind* [impl m-val m-fun]))
