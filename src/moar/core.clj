@@ -1,11 +1,15 @@
 (ns moar.core
   (:require [moar.utils :refer :all]
+            [clojure.core.typed :as t]
             [moar.protocols :refer :all]))
+
+(defn MonadInstance? [x]
+  (satisfies? MonadInstance x))
 
 (defn monad-instance?
   "Checks whether monads have the given implementation"
   [m-impl & m-vals]
-  (every? #(and (satisfies? MonadInstance %)
+  (every? #(and (MonadInstance? %)
                 (= m-impl (monad-implementation %)))
           m-vals))
 
@@ -90,6 +94,7 @@
   [bindings & body]
   (mlet-body bindings body))
 
+(t/ann fmap (t/All [x] [[x -> x] (Functor x) -> (Functor x)]))
 (defn fmap
   "takes a function and a monad and returns a new monad with that
   function applied to the value
@@ -99,9 +104,17 @@
   [fun m-val]
   (fmap* m-val fun))
 
+(t/ann pure (t/All [y] [(Applicative y) y -> (Applicative y)]))
 (defn pure [f-val val]
   (pure* f-val val))
 
+(t/ann fapply
+  (t/All [y a b c d z ...]
+    (t/IFn [[-> y] -> (Applicative y)]
+           [[a -> y] (Applicative a) -> (Applicative y)]
+           [[a b -> y] (Applicative a) (Applicative b) -> (Applicative y)]
+           [[a b c -> y] (Applicative a) (Applicative b) (Applicative c) -> (Applicative y)]
+           [[a b c d z ... z -> y] (Applicative a) (Applicative b) (Applicative c) (Applicative d) z ... z -> (Applicative y)])))
 (defn fapply [f-fun & f-vals]
   (fapply* f-fun f-vals))
 
